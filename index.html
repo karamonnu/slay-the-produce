@@ -116,6 +116,7 @@ h2{font-size:21px;margin:8px 0 6px;font-weight:400}
 .tabs{display:flex;gap:4px;flex-wrap:wrap;position:sticky;top:-14px;background:var(--panel);padding:6px 0;z-index:2;border-bottom:2px solid var(--line)}.tabs button{min-height:40px;padding:4px 10px;box-shadow:none}.tabs button.on{border-color:var(--gold);color:var(--gold)}
 .dri{flex:none;width:34px;height:34px;display:grid;place-items:center;border:2px solid var(--gold);border-radius:6px;background:#3b2f58;color:var(--gold)}.dri.bo{background:#5a1838;border-color:#ff6080;color:#ffb0c0}
 .mvl{font-size:12.5px;color:var(--dim);line-height:1.4}.tag{font-size:12px;color:var(--gold)}
+.hero.farm{background:repeating-linear-gradient(90deg,transparent 0 22px,#6a4a2a 22px 25px) bottom/100% 30px no-repeat,linear-gradient(#3a2a4a,#8a5a4a 62%,#5a3a20 62%)}.hero.innbg{background:radial-gradient(circle at 18% 22%,#ffd070 0 8px,#ffb04033 9px 40px,transparent 41px),repeating-linear-gradient(90deg,#6a4020 0 26px,#5a3418 26px 29px)}
 .center{text-align:center}.gap{height:8px}
 @media (prefers-reduced-motion:reduce){.fx{animation-duration:.01s}.hit{animation:none}.ent,.cd{transition:none}}
 </style>
@@ -124,6 +125,158 @@ h2{font-size:21px;margin:8px 0 6px;font-weight:400}
 <div id="app"><div id="hud"></div><div id="main"></div></div>
 <div id="modal"></div>
 <div id="toast"></div>
+<script>
+window.CARDS = {
+
+punch:   {n:'みみミサイル',      c:1, t:'a', r:'s', dmg:6,                 d:'{D}ダメージ'},
+guard:   {n:'うさガード',        c:1, t:'s', r:'s', blk:5,                 d:'ブロック{B}'},
+slap:    {n:'耳ビンタ',          c:2, t:'a', r:'s', dmg:9, vul:2,          d:'{D}ダメージ<br>弱体{V}'},
+
+chop:    {n:'ちょこっとパンチ',  c:0, t:'a', r:'c', dmg:6,                 d:'{D}ダメージ'},
+kick2:   {n:'二連キック',        c:1, t:'a', r:'c', dmg:5, hits:2,         d:'{D}ダメージ×{H}'},
+carrotp: {n:'毒にんじん',        c:1, t:'a', r:'c', dmg:4, poi:4,          d:'{D}ダメージ<br>毒{P}'},
+sweep:   {n:'足払い',            c:1, t:'a', r:'c', dmg:6, vul:1,          d:'{D}ダメージ<br>弱体{V}'},
+tomato:  {n:'トマト投げ',        c:1, t:'a', r:'c', dmg:7, weak:1,         d:'{D}ダメージ<br>ふにゃ{W}'},
+tackle:  {n:'捨て身タックル',    c:1, t:'a', r:'c', dmg:13, selfVul:1,     d:'{D}ダメージ<br>自分に弱体{SV}'},
+gouge:   {n:'傷口えぐり',        c:1, t:'a', r:'c', dmg:7, hx:2,           d:'{D}ダメージ<br>阻害{X}'},
+cannon:  {n:'やけくそ大砲',      c:2, t:'a', r:'c', dmg:23, fx:'exhRand',  d:'手札をランダムに1枚廃棄<br>{D}ダメージ'},
+glare:   {n:'ジト目',            c:0, t:'s', r:'c', weak:2,                d:'敵にふにゃ{W}'},
+blind:   {n:'目くらまし',        c:1, t:'s', r:'c', dz:2,                  d:'敵にめまい{Z}'},
+hop:     {n:'ぴょんぴょん',      c:1, t:'s', r:'c', blk:6, draw:1,         d:'ブロック{B}<br>{DR}枚引く'},
+fog:     {n:'毒霧',              c:1, t:'s', r:'c', poi:7,                 d:'敵に毒{P}'},
+breath:  {n:'深呼吸',            c:0, t:'s', r:'c', draw:2, ex:1,          d:'{DR}枚引く<br>廃棄'},
+shell:   {n:'からにこもる',      c:2, t:'s', r:'c', blk:15, weak:1,         d:'ブロック{B}<br>敵にふにゃ{W}'},
+search:  {n:'耳さがし',          c:1, t:'a', r:'c', dmg:7, fx:'drawUntil', d:'{D}ダメージ<br>アタック以外のカードを引くまで引き続ける'},
+clean:   {n:'耳そうじ',          c:1, t:'s', r:'c', draw:2, fx:'exhPick',  d:'手札を1枚選んで廃棄<br>{DR}枚引く'},
+shield9: {n:'耳でかばう',        c:1, t:'s', r:'c', blk:9, fx:'exhPick',   d:'手札を1枚選んで廃棄<br>ブロック{B}'},
+
+rush:    {n:'ミミラッシュ',      c:2, t:'a', r:'u', dmg:3, hits:4,         d:'{D}ダメージ×{H}'},
+vamp:    {n:'吸血耳',            c:2, t:'a', r:'u', dmg:10, drain:50,       d:'{D}ダメージ<br>与えたダメージの{DRN}%回復'},
+jump:    {n:'跳躍キック',        c:2, t:'a', r:'u', dmg:5, dodge:1,       d:'{D}ダメージ<br>次の攻撃を回避'},
+dizzyk:  {n:'ふらふらキック',    c:2, t:'a', r:'u', dmg:10, dz:1, vul:1,   d:'{D}ダメージ<br>めまい{Z} 弱体{V}'},
+grave:   {n:'おもいでパンチ',    c:1, t:'a', r:'u', dmg:7, dyn:1, per:4,   d:'{D}ダメージ<br>（廃棄札1枚につき+{PER}）'},
+iron:    {n:'鉄耳ガード',        c:2, t:'s', r:'u', blk:25, selfDmg:3,     d:'ブロック{B}<br>HPを{SD}失う'},
+pboost:  {n:'ポイズンブースト',  c:1, t:'s', r:'u', fx:'pdouble', ex:1,    d:'敵の毒を2倍<br>廃棄'},
+bite:    {n:'にんじんかじり',    c:0, t:'s', r:'u', en:1, ex:1,            d:'エネルギー+{E}<br>廃棄'},
+dguard:  {n:'全力ガード',        c:1, t:'s', r:'u', fx:'bdouble',          d:'今のブロックを2倍'},
+heal:    {n:'リコピンヒール',    c:1, t:'s', r:'u', heal:6, ex:1,          d:'HP{HL}回復<br>廃棄'},
+curse:   {n:'呪い返し',          c:1, t:'s', r:'u', vul:2, weak:1,         d:'敵に弱体{V}<br>ふにゃ{W}'},
+cleanse: {n:'浄化のハーブ',      c:1, t:'s', r:'u', fx:'cleanse', ex:1,    d:'自分の状態異常を<br>すべて解除 廃棄'},
+quick:   {n:'早読み',            c:0, t:'s', r:'u', draw:3, fx:'noDraw',   d:'{DR}枚引く<br>このターンもう引けない'},
+amulet:  {n:'まもりの祈り',      c:2, t:'s', r:'u', art:2, ex:1,           d:'アーティファクト{A}<br>廃棄'},
+rageC:   {n:'耳逆立て',          c:1, t:'p', r:'u', pw:'str', v:2,         d:'筋力+{PV}'},
+metal:   {n:'鉄壁の心',          c:2, t:'p', r:'u', pw:'metal', v:5,       d:'毎ターン開始時<br>ブロック{PV}'},
+pfield:  {n:'毒の大地',          c:2, t:'p', r:'u', pw:'pfield', v:3,      d:'毎ターン開始時<br>敵に毒{PV}'},
+spirit:  {n:'うさぎの闘志',      c:2, t:'p', r:'u', pw:'spirit', v:3,      d:'アタックを使うたび<br>ブロック{PV}'},
+tough:   {n:'がまん強さ',        c:1, t:'p', r:'u', pw:'res', v:25,        d:'状態異常抵抗+{PV}%'},
+devour:  {n:'むしゃむしゃ',      c:2, t:'p', r:'u', pw:'devour', v:1,      d:'ターン開始時 ランダムな手札を{PV}枚廃棄し 1枚につき筋力+1'},
+binge:   {n:'やけ食いキック',    c:2, t:'a', r:'u', dmg:5, hits:2, gstr:3, estr:1, d:'{D}ダメージ×{H}<br>筋力+{GS}<br>敵も筋力+{ES}'},
+weakspot:{n:'弱点みっけ',        c:1, t:'p', r:'u', pw:'vulDraw', v:1,     d:'敵に弱体を与えるたび<br>{PV}枚引く'},
+plate:   {n:'鉄の毛皮',          c:1, t:'p', r:'u', pw:'armor', v:5,       d:'アーマー{PV}'},
+
+beam:    {n:'リコピンビーム',    c:3, t:'a', r:'r', dmg:30, pierce:1,      d:'ブロック無視<br>{D}ダメージ'},
+burst:   {n:'キャロットバースト',c:4, t:'a', r:'r', dmg:40, blk:30, fx:'exhAll', d:'手札をすべて廃棄<br>{D}ダメージ<br>ブロック{B}'},
+storm:   {n:'ラビットストーム',  c:3, t:'a', r:'r', dmg:4, hits:6,         d:'{D}ダメージ×{H}'},
+moon:    {n:'ムーンサルト',      c:2, t:'a', r:'r', dmg:12, blk:12,        d:'{D}ダメージ<br>ブロック{B}'},
+reap:    {n:'野菜狩り',          c:2, t:'a', r:'r', dmg:14, fx:'exec', execAt:30, execX:3, d:'{D}ダメージ<br>敵HP{TH}%以下なら{MX}倍'},
+venom:   {n:'猛毒の牙',          c:2, t:'a', r:'r', dmg:6, poi:10,         d:'{D}ダメージ<br>毒{P}'},
+wall:    {n:'大地の盾',          c:3, t:'s', r:'r', blk:25, draw:2,        d:'ブロック{B}<br>{DR}枚引く'},
+offer:   {n:'命の前借り',        c:0, t:'s', r:'r', fx:'offer', hpCost:5, en:3, draw:2, d:'最大HPを{HP}失う<br>エネルギー+{E}<br>{DR}枚引く'},
+echo:    {n:'やまびこ',          c:2, t:'s', r:'r', fx:'echo',             d:'次に使うカードを<br>2回発動する'},
+harvest: {n:'収穫祭',            c:3, t:'p', r:'r', pw:'harvest', v:1, pe:1, d:'毎ターン<br>{PV}枚多く引き<br>エネルギー+{PE}'},
+awaken:  {n:'覚醒の耳',          c:3, t:'p', r:'r', pw:'demon', v:2,       d:'毎ターン開始時<br>筋力+{PV}'},
+punish:  {n:'隙あり！',          c:2, t:'p', r:'r', pw:'punish', v:7,      d:'敵が攻撃以外の行動をするたび<br>{PV}ダメージ'},
+
+ prey:    {n:'捕食',              c:2, t:'a', r:'r', dmg:5, maxUp:1,         d:'{D}ダメージ<br>最大HP+{MU}'},
+ poiwall: {n:'毒の壁',            c:2, t:'s', r:'u', fx:'poiWall',          d:'敵の毒の値だけ<br>ブロックを得る'},
+ bigbody: {n:'ずっしりボディ',    c:3, t:'a', r:'u', dmg:1, dynKind:'hp', hpPct:30, hpDbl:150, d:'{D}ダメージ<br>（最大HPの{HPP}%。最大HP{HPD}以上なら2倍）'},
+ gamble:  {n:'運だめし',          c:1, t:'s', r:'c', fx:'topPlay',          d:'山札の一番上のカードを使い<br>そのカードを廃棄'},
+ owl:     {n:'夜ふかし',          c:1, t:'p', r:'r', pw:'owl', v:1,         d:'ターン開始時<br>HPを{PV}失い{PV}枚引く'},
+ clone:   {n:'分身パンチ',        c:0, t:'a', r:'c', dmg:6, fx:'copyDisc',  d:'{D}ダメージ<br>このカードの複製を捨て札に加える'},
+ slam:    {n:'うさシールド突進',  c:1, t:'a', r:'c', dmg:1, dynKind:'blk',  d:'ブロックの値だけダメージ<br>（今{D}）'},
+ruin:    {n:'破滅の刻印',        c:1, t:'c', r:'x', ex:1, held:4,          d:'ターン終了時に手札にあると{HD}ダメージ<br>使うと廃棄'},
+bleed:   {n:'出血',              c:0, t:'c', r:'x', np:1,                  d:'使えない'},
+regret:  {n:'後悔',              c:0, t:'c', r:'x', np:1, left:5,          d:'使えない<br>あと{L}戦で消える'},
+dizzyc:  {n:'めまい',            c:0, t:'c', r:'x', np:1, eth:1,           d:'使えない<br>ターン終了時に手札にあると廃棄'},
+
+};
+window.RELICS = {
+
+gtom:    {n:'黄金のトマト',       i:'金', v:50,         d:'戦闘で得るゴールド+{v}%'},
+foot:    {n:'うさぎの足',         i:'足', v:10,         d:'回避率+{v}%'},
+icar:    {n:'鉄のニンジン',       i:'鉄', v:2,          d:'ブロックカードの値+{v}'},
+rear:    {n:'赤い耳飾り',         i:'飾', v:2,          d:'アタックのダメージ+{v}'},
+turn:    {n:'生命のカブ',         i:'命', v:25,         d:'最大HP+{v}'},
+nasu:    {n:'魔力のナス',         i:'魔', v:2,          d:'1ターン目 エネルギー+{v}'},
+clover:  {n:'四つ葉のクローバー', i:'葉', v:2,          d:'1ターン目 カードを{v}枚多く引く'},
+sprout:  {n:'再生の芽',           i:'芽', v:3,          d:'毎ターン HP+{v}'},
+thorn:   {n:'とげとげの殻',       i:'棘', v:4,          d:'攻撃を受けるたび 敵に{v}ダメージ'},
+whis:    {n:'先制の笛',           i:'笛', v:12,         d:'戦闘開始時 敵に{v}ダメージ'},
+fang:    {n:'吸血の牙',           i:'牙', v:5,  v2:20,  d:'与えたダメージの{v}%回復・ただし与えるダメージ-{v2}%'},
+edge:    {n:'崖っぷちの勇気',     i:'崖', v:30, v2:20,  d:'HPが{v}%以下のとき 与えるダメージ+{v2}%'},
+glass:   {n:'会心メガネ',         i:'眼', v:15,         d:'会心率+{v}%'},
+medal:   {n:'勝者のメダル',       i:'勲', v:8,          d:'勝利するとHP+{v}'},
+pin:     {n:'耳のヘアピン',       i:'耳', v:2,          d:'各戦闘の最初の一撃が{v}倍'},
+phoe:    {n:'不死鳥の羽',         i:'羽', v:50,         d:'一度だけ HP{v}%で復活する'},
+card:    {n:'商人の会員証',       i:'券', v:30,         d:'ショップの値段-{v}%'},
+vial:    {n:'毒の小瓶',           i:'瓶', v:1,          d:'攻撃が当たるたび 毒{v}'},
+pick:    {n:'熟成ピクルス',       i:'漬', v:1,          d:'ポイント獲得のたび+{v}'},
+scope:   {n:'弱点スコープ',       i:'鏡', v:2,          d:'戦闘開始時 敵に弱体{v}'},
+powder:  {n:'ふにゃふにゃ粉',     i:'粉', v:2,          d:'戦闘開始時 敵にふにゃ{v}'},
+herb:    {n:'解毒のハーブ',       i:'草', v:15,         d:'状態異常抵抗+{v}%'},
+tie:     {n:'大人のネクタイ',     i:'紳',               d:'赤ちゃんにならない'},
+vow:     {n:'不殺の誓い',         i:'誓', v:10,         d:'自分のターンにアタックを使わなかったら、ターン終了時 敵に最大HPの{v}%ダメージ'},
+helm:    {n:'猪突の兜',           i:'兜', v:30,         d:'自分のターンにアタックだけを使ったら、次に受けるダメージ-{v}%'},
+shoe:    {n:'勢いのスニーカー',   i:'靴', v:4,  v2:1,   d:'1ターンにカードを{v}枚以上使うと、次のターン{v2}枚多く引く'},
+tail:    {n:'身軽なしっぽ',       i:'尾', v:2, v2:5,    d:'攻撃を回避するたび 筋力+{v}・HP{v2}回復'},
+bitter:  {n:'にがい薬',           i:'苦', v:1,          d:'状態異常をかけられるたび HP{v}回復'},
+prank:   {n:'いたずら手帳',       i:'悪', v:1,          d:'敵に状態異常をかけるたび HP{v}回復'},
+gaunt:   {n:'トゲの小手',         i:'小', v:1,          d:'アタックを使うたび ブロック{v}'},
+memo:    {n:'作戦メモ',           i:'メ', v:1,          d:'パワーを使うたび {v}枚引く'},
+trash:   {n:'燃えるゴミ袋',       i:'燃', v:5,          d:'カードを廃棄するたび 敵に{v}ダメージ'},
+leaf:    {n:'葉っぱの盾',         i:'盾', v:15,         d:'戦闘開始時 ブロック{v}'},
+hglass:  {n:'砂時計',             i:'砂', v:3, v2:1,    d:'{v}ターンごとにエネルギー+{v2}（カウントは戦闘をまたいで続く）'},
+acorn:   {n:'力のどんぐり',       i:'実', v:4,          d:'パワーを使うたび ブロック{v}'},
+surprise:{n:'びっくり箱',         i:'驚', v:3,          d:'各戦闘で初めてHPを失ったとき {v}枚引く'},
+onigiri: {n:'勇者のおにぎり',     i:'握', v:13,         d:'強敵・ボス戦の開始時 HP{v}回復'},
+bloom:   {n:'遅咲きの花',         i:'花', v:22,         d:'2ターン目の開始時 ブロック{v}'},
+battery: {n:'充電池',             i:'電',               d:'使わなかったエネルギーを次のターンに持ち越せる'},
+calm:    {n:'のんびり帽子',       i:'帽', v:3, v2:3,    d:'自分のターンに使ったカードが{v}枚以下なら 次のターン{v2}枚多く引く'},
+lid:     {n:'がまんの鍋ぶた',     i:'蓋', v:30,         d:'1ターンに失うHPは最大{v}まで'},
+gsprout: {n:'金のなる苗',         i:'苗', v:3,          d:'ゴールドを獲得するたび 最大HP+{v}'},
+charm:   {n:'うさぎの守り札',     i:'札', v:10, v2:10,  d:'取得時 最大HP+{v}%・回避率+{v2}%'},
+
+sHeal:   {n:'王家の薬草袋',       i:'薬', st:1, v:30,   d:'カード合成のたびにHP{v}回復'},
+sCard:   {n:'王立図書館の推薦状', i:'書', st:1, v:2,    d:'受け取ったとき カード報酬を{v}回選べる'},
+sStat:   {n:'王家の紋章',         i:'紋', st:1, v:1, v2:1, d:'攻撃+{v}・防御+{v2}'},
+sGamble: {n:'王様の気まぐれ宝箱', i:'宝', st:1, v:2, v2:30, d:'ボス以外のランダムなアーティファクトを{v}つもらえる。ただし最大HP-{v2}'},
+sFlag:   {n:'王国騎士団の旗',     i:'旗', st:1, v:1, v2:10, d:'強敵との戦闘中 毎ターンエネルギー+{v}・ターン開始時に{v}枚多く引く。強敵に勝つとHP{v2}回復'},
+sGrow:   {n:'成長の王冠',         i:'育', st:1, v:3,    d:'マスを1つ進むたびに最大HP+{v}'},
+sKey:    {n:'宝物庫の鍵',         i:'庫', st:1,         d:'1層のボスを倒したとき、ボスアーティファクトをもう1回3択で選べる'},
+
+ fSel:    {n:'農家の種袋',         i:'種', f:1, v:20, v2:3, d:'入手時 カード{v}枚の中から{v2}枚を選んで獲得'},
+ fMorph:  {n:'畑の土壌改良剤',     i:'土', f:1, v:3,     d:'入手時 デッキのカードを{v}枚選び ランダムなカードに変化させる'},
+ fSkip:   {n:'がまんのクワ',       i:'鍬', f:1, v:2,     d:'カード報酬を{v}回スキップするたび アーティファクトを獲得'},
+ fCoin:   {n:'農協の貯金箱',       i:'貯', f:1, v:5, v2:1, d:'ターン開始時 {v}ゴールド払って エネルギー+{v2}'},
+ fBurst:  {n:'朝採れ野菜',         i:'朝', f:1, v:4,     d:'戦闘開始時（1ターン目のみ） エネルギー+{v}'},
+ iFour:   {n:'宿屋の呼び鈴',       i:'呼', inn:1, v:4, v2:1, d:'カードを{v}枚使うたび {v2}枚引く'},
+ iAtk:    {n:'まかない弁当',       i:'弁', inn:1,        d:'ターン開始時 ランダムなアタックを1枚手札に加える。このターンはコスト0で使える'},
+ iCurse:  {n:'いわくつきの鍵',     i:'鍵', inn:1, v:2, v2:3, d:'入手時 ランダムな呪いを{v}枚デッキに加え アーティファクトを{v2}個得る'},
+ iPower:  {n:'宿帳',               i:'帳', inn:1,        d:'戦闘開始時 山札からランダムなパワーを手札に加える。それはコスト0で使える'},
+ iFuse:   {n:'合成のかまど',       i:'竈', inn:1, v:2,   d:'強敵を倒すたび ランダムなカードで合成が{v}回起こる'},
+crown:   {n:'王者の冠',           i:'冠', b:1, v:1, v2:40, d:'毎ターン エネルギー+{v}・ただし戦闘で得るゴールド-{v2}%'},
+scepter: {n:'毒の王笏',           i:'杖', b:1, v:3,     d:'毒を与えるたび さらに+{v}'},
+bandana: {n:'狂戦士のバンダナ',   i:'巾', b:1, v:3, v2:2, d:'戦闘開始時 筋力+{v}。HPが半分以下の間はさらに筋力+{v2}'},
+earmuff: {n:'要塞の耳当て',       i:'塞', b:1,          d:'ブロックがターンをまたいで残る'},
+moon:    {n:'月のうさぎ',         i:'月', b:1, v:1,     d:'毎ターン {v}枚多く引く'},
+doll:    {n:'呪術人形',           i:'呪', b:1, v:3, v2:3, d:'戦闘開始時 敵に弱体{v}・ふにゃ{v2}'},
+bell:    {n:'双子の鈴',           i:'鈴', b:1, v:1,     d:'0コストのカードを使うたび {v}枚引く'},
+heart:   {n:'不屈の心臓',         i:'心', b:1, v:6, v2:3, d:'ターン終了時 残りエネルギー1につき ブロック{v}。エネルギーが{v2}以上残っていたら自分の状態異常をすべて解除'},
+chain:   {n:'絆の鎖',             i:'鎖', b:1, v:1,     d:'毎ターン エネルギー+{v}・ただしカード削除ができなくなる'},
+glove:   {n:'連撃のグローブ',     i:'拳', b:1, v:1,     d:'2回以上攻撃するカードの回数+{v}'},
+
+};
+</script>
 <script>
 {
 const PAL={k:'#1a1a22',w:'#ffffff',g:'#c4c4d0',G:'#86869a',r:'#e03050',R:'#8e1f42',s:'#ffe2d4',b:'#f4a0a8',e:'#b08aae',o:'#f07850',O:'#b8482a',y:'#ffd040',Y:'#d0a020',l:'#8ad860',L:'#3a9a3a',D:'#1f5a2a',p:'#9a5ad0',P:'#5a2a80',n:'#c89060',N:'#8a5a30',c:'#c8e4ff',C:'#5a7a9a',t:'#f4ecd4',j:'#a4a4b2',u:'#4a8ae0',m:'#f08ab0',M:'#b04a7a',v:'#c8e070',V:'#8aa030'};
@@ -206,165 +359,71 @@ const GEN={
  dragon:{h:20,b:'m',d:'M',pat:'scale',pc:'l',cy:11,rx:5,ry:6,top:'flame',angry:1,outline:'spike',cape:1}
 };
 Object.entries(GEN).forEach(([k,o])=>SPR[k]=gen(o));
+SPR.farmer=SPR.hero.map((r,y)=>y==7?'....gGYYYYGg....':y==8?'..Y'+'y'.repeat(10)+'Y..':y>=16?r.replace(/j/g,'u').replace(/o/g,'n'):r);
+SPR.inn=SPR.hero.map((r,y)=>y==8?'...wrrrrrrrrw...':y==9?'....rRrrrrRr....':y>=17?r.replace(/w/g,'t').replace(/j/g,'N'):r);
+SPR.daikon2=SPR.daikon.map(r=>r.replace(/t/g,'g').replace(/R/g,'P').replace(/y/g,'r'));
 SPR.king=SPR.hero.map((r,y)=>y==6?'....ggy..ygg....':y==7?'....gGyyyyGg....':y==8?'...wggyryyggw...':y>=16?r.replace(/j/g,'R').replace(/w/g,'p').replace(/o/g,'y').replace(/u/g,'y'):r);
 const cache={};
 function img(id,sc){if(!cache[id]){const rows=SPR[id],w=Math.max(...rows.map(r=>r.length));const cv=document.createElement('canvas');cv.width=w;cv.height=rows.length;const x=cv.getContext('2d');rows.forEach((r,y)=>[...r].forEach((ch,i)=>{if(PAL[ch]){x.fillStyle=PAL[ch];x.fillRect(i,y,1,1)}}));cache[id]={u:cv.toDataURL(),w,h:rows.length}}const c=cache[id];return `<img class="px" src="${c.u}" width="${c.w*sc}" height="${c.h*sc}" alt="">`}
 
-const CD={
- punch:{n:'みみミサイル',c:1,t:'a',r:'s',dmg:6,d:'{D}ダメージ'},
- guard:{n:'うさガード',c:1,t:'s',r:'s',blk:5,d:'ブロック{B}'},
- slap:{n:'耳ビンタ',c:2,t:'a',r:'s',dmg:9,vul:2,d:'{D}ダメージ<br>弱体2'},
- chop:{n:'ちょこっとパンチ',c:0,t:'a',r:'c',dmg:4,d:'{D}ダメージ'},
- kick2:{n:'二連キック',c:1,t:'a',r:'c',dmg:4,hits:2,d:'{D}ダメージ×{H}'},
- carrotp:{n:'毒にんじん',c:1,t:'a',r:'c',dmg:4,poi:4,d:'{D}ダメージ<br>毒{P}'},
- sweep:{n:'足払い',c:1,t:'a',r:'c',dmg:6,vul:1,d:'{D}ダメージ<br>弱体1'},
- tomato:{n:'トマト投げ',c:1,t:'a',r:'c',dmg:7,weak:1,d:'{D}ダメージ<br>ふにゃ1'},
- tackle:{n:'捨て身タックル',c:1,t:'a',r:'c',dmg:13,selfVul:1,d:'{D}ダメージ<br>自分に弱体1'},
- gouge:{n:'傷口えぐり',c:1,t:'a',r:'c',dmg:7,hx:2,d:'{D}ダメージ<br>阻害2'},
- glare:{n:'ジト目',c:0,t:'s',r:'c',weak:2,d:'敵にふにゃ2'},
- blind:{n:'目くらまし',c:1,t:'s',r:'c',dz:2,d:'敵にめまい2'},
- hop:{n:'ぴょんぴょん',c:1,t:'s',r:'c',blk:5,draw:1,d:'ブロック{B}<br>1枚引く'},
- fog:{n:'毒霧',c:1,t:'s',r:'c',poi:7,d:'敵に毒{P}'},
- breath:{n:'深呼吸',c:0,t:'s',r:'c',draw:2,ex:1,d:'2枚引く<br>廃棄'},
- shell:{n:'からにこもる',c:2,t:'s',r:'c',blk:9,weak:1,d:'ブロック{B}<br>敵にふにゃ1'},
- iron:{n:'鉄耳ガード',c:2,t:'s',r:'u',blk:12,d:'ブロック{B}'},
- rush:{n:'ミミラッシュ',c:2,t:'a',r:'u',dmg:3,hits:4,d:'{D}ダメージ×{H}'},
- vamp:{n:'吸血耳',c:2,t:'a',r:'u',dmg:9,drain:.5,d:'{D}ダメージ<br>与えた分の半分HP回復'},
- jump:{n:'跳躍キック',c:2,t:'a',r:'u',dmg:10,dodge:1,d:'{D}ダメージ<br>次の攻撃を回避'},
- dizzyk:{n:'ふらふらキック',c:2,t:'a',r:'u',dmg:10,dz:1,vul:1,d:'{D}ダメージ<br>めまい1 弱体1'},
- pboost:{n:'ポイズンブースト',c:1,t:'s',r:'u',fx:'pdouble',ex:1,d:'敵の毒を2倍<br>廃棄'},
- bite:{n:'にんじんかじり',c:0,t:'s',r:'u',en:1,ex:1,d:'エネルギー+1<br>廃棄'},
- dguard:{n:'全力ガード',c:1,t:'s',r:'u',fx:'bdouble',d:'今のブロックを2倍'},
- heal:{n:'リコピンヒール',c:1,t:'s',r:'u',heal:4,ex:1,d:'HP4回復<br>廃棄'},
- curse:{n:'呪い返し',c:1,t:'s',r:'u',vul:2,weak:2,d:'敵に弱体2<br>ふにゃ2'},
- cleanse:{n:'浄化のハーブ',c:1,t:'s',r:'u',fx:'cleanse',ex:1,d:'自分の状態異常を<br>すべて解除 廃棄'},
- rageC:{n:'耳逆立て',c:1,t:'p',r:'u',pw:'str',v:2,d:'筋力+2'},
- metal:{n:'鉄壁の心',c:2,t:'p',r:'u',pw:'metal',v:5,d:'毎ターン開始時<br>ブロック5'},
- pfield:{n:'毒の大地',c:2,t:'p',r:'u',pw:'pfield',v:3,d:'毎ターン開始時<br>敵に毒3'},
- spirit:{n:'うさぎの闘志',c:1,t:'p',r:'u',pw:'spirit',v:3,d:'アタックを使うたび<br>ブロック3'},
- tough:{n:'がまん強さ',c:1,t:'p',r:'u',pw:'res',v:25,d:'状態異常抵抗+25%'},
- beam:{n:'リコピンビーム',c:3,t:'a',r:'r',dmg:24,pierce:1,d:'ブロック無視<br>{D}ダメージ'},
- burst:{n:'キャロットバースト',c:4,t:'a',r:'r',dmg:38,d:'{D}ダメージ'},
- storm:{n:'ラビットストーム',c:3,t:'a',r:'r',dmg:4,hits:6,d:'{D}ダメージ×{H}'},
- harvest:{n:'収穫祭',c:3,t:'p',r:'r',pw:'harvest',v:1,d:'毎ターン<br>1枚多く引く'},
- wall:{n:'大地の盾',c:3,t:'s',r:'r',blk:22,draw:1,d:'ブロック{B}<br>1枚引く'},
- moon:{n:'ムーンサルト',c:2,t:'a',r:'r',dmg:12,blk:10,d:'{D}ダメージ<br>ブロック{B}'},
- reap:{n:'野菜狩り',c:2,t:'a',r:'r',dmg:10,fx:'exec',d:'{D}ダメージ<br>敵HP30%以下なら3倍'},
- venom:{n:'猛毒の牙',c:2,t:'a',r:'r',dmg:6,poi:10,d:'{D}ダメージ<br>毒{P}'},
- shield9:{n:'耳でかばう',c:1,t:'s',r:'c',blk:9,fx:'exhPick',d:'手札を1枚選んで廃棄<br>ブロック{B}'},
- cannon:{n:'やけくそ大砲',c:2,t:'a',r:'c',dmg:23,fx:'exhRand',d:'手札をランダムに1枚廃棄<br>{D}ダメージ'},
- grave:{n:'おもいでパンチ',c:1,t:'a',r:'u',dmg:7,dyn:1,d:'{D}ダメージ<br>（廃棄札1枚につき+4）'},
- devour:{n:'むしゃむしゃ',c:2,t:'p',r:'u',pw:'devour',v:1,d:'ターン開始時 ランダムな手札を1枚廃棄し 筋力+1'},
- quick:{n:'早読み',c:0,t:'s',r:'u',draw:3,fx:'noDraw',d:'3枚引く<br>このターンもう引けない'},
- amulet:{n:'まもりの祈り',c:2,t:'s',r:'u',art:2,ex:1,d:'アーティファクト2<br>廃棄'},
- plate:{n:'鉄の毛皮',c:1,t:'p',r:'u',pw:'armor',v:5,d:'アーマー5'},
- offer:{n:'命の前借り',c:0,t:'s',r:'r',fx:'offer',en:3,draw:2,d:'最大HPを6失う<br>エネルギー+3<br>2枚引く'},
- awaken:{n:'覚醒の耳',c:3,t:'p',r:'r',pw:'demon',v:2,d:'毎ターン開始時<br>筋力+2'},
- punish:{n:'隙あり！',c:2,t:'p',r:'r',pw:'punish',v:7,d:'敵が攻撃以外の行動をするたび<br>7ダメージ'},
- ruin:{n:'破滅の刻印',c:1,t:'c',r:'x',ex:1,d:'ターン終了時に手札にあると4ダメージ<br>使うと廃棄'},
- bleed:{n:'出血',c:0,t:'c',r:'x',np:1,d:'使えない'},
- dizzyc:{n:'めまい',c:0,t:'c',r:'x',np:1,eth:1,d:'使えない<br>ターン終了時に手札にあると廃棄'}
-};
+const CD=window.CARDS,RL=window.RELICS;
 const TY={a:'アタック',s:'スキル',p:'パワー',c:'呪い・状態異常'};
-const GL={'弱体':'受けるダメージ+50%','ふにゃ':'与えるダメージ-25%','めまい':'攻撃の命中率ダウン（自分がかかると-40%、敵にかけると-20%）','阻害':'回復量-50%','赤ちゃん':'ポイントで上げた攻撃・防御が0になる','束縛':'1ターンにカードを3枚までしか使えない','破滅':'ターン終了時、使ったカード1枚が廃棄され、山札に「破滅の刻印」が混ざる','毒':'ターン開始時に毒の数だけダメージ、その後1減る','ブロック':'次の自分のターンまでダメージを防ぐ','筋力':'アタックのダメージがその分増える','廃棄':'使うとこの戦闘中はもう出てこない','パワー':'使うと戦闘が終わるまで効果が続く','エネルギー':'カードを使うためのコスト。毎ターン4に戻る','状態異常抵抗':'敵の状態異常を確率で防ぐ','アーマー':'ターン終了時にアーマーの値だけブロックを得て、その後1減る','アーティファクト':'敵からの妨害（状態異常・状態異常カード）を1回防ぐごとに1減る','出血':'敵が混ぜてくる使えないカード','保留':'ターン終了時に捨てられず手札に残る。使うと捨て札ではなく山札に戻る'};
+const GL={'弱体':'受けるダメージ+50%','ふにゃ':'与えるダメージ-25%','めまい':'攻撃の命中率ダウン（自分がかかると-40%、敵にかけると-20%）','阻害':'回復量-50%','赤ちゃん':'ポイントで上げた攻撃・防御が0になる','束縛':'1ターンにカードを3枚までしか使えない','破滅':'ターン終了時、使ったカード1枚が廃棄され、山札に「破滅の刻印」が混ざる','毒':'ターン開始時に毒の数だけダメージ、その後1減る','ブロック':'次の自分のターンまでダメージを防ぐ','筋力':'アタックのダメージがその分増える','廃棄':'使うとこの戦闘中はもう出てこない','パワー':'使うと戦闘が終わるまで効果が続く','エネルギー':'カードを使うためのコスト。毎ターン4に戻る','状態異常抵抗':'敵の状態異常を確率で防ぐ','アーマー':'ターン終了時にアーマーの値だけブロックを得て、その後1減る','アーティファクト':'敵からの妨害（状態異常・状態異常カード）を1回防ぐごとに1減る','出血':'敵が混ぜてくる使えないカード','保留':'ターン終了時に捨てられず手札に残る','筋力低下':'筋力がその値だけ下がる（ターンで減らない）','防御低下':'防御がその値だけ下がる（ターンで減らない）','眠り':'眠りの間は行動できない。ターン終了時と攻撃を受けたときに1減る','活力':'次に使うアタックの全ヒットに追加ダメージ','再生':'ターン終了時にその値だけHP回復し、1減る','スタン':'次の自分のターンはカードを使えない'};
 const ENCH={cost:'コスト-1',draw:'使用時1枚引く',dmg:'ダメージ1.2倍',keep:'保留',dr:'使うたび戦闘中の被ダメ-1'};
 
-const RL={
- gtom:{n:'黄金のトマト',i:'金',d:'戦闘で得るゴールド+50%'},
- foot:{n:'うさぎの足',i:'足',d:'回避率+10%'},
- icar:{n:'鉄のニンジン',i:'鉄',d:'ブロックカードの値+2'},
- rear:{n:'赤い耳飾り',i:'飾',d:'アタックのダメージ+2'},
- turn:{n:'生命のカブ',i:'命',d:'最大HP+15',on:p=>{p.maxHp+=15;p.hp+=15}},
- nasu:{n:'魔力のナス',i:'魔',d:'1ターン目 エネルギー+2'},
- clover:{n:'四つ葉のクローバー',i:'葉',d:'1ターン目 カードを2枚多く引く'},
- sprout:{n:'再生の芽',i:'芽',d:'毎ターン HP+2'},
- thorn:{n:'とげとげの殻',i:'棘',d:'攻撃を受けるたび 敵に3ダメージ'},
- whis:{n:'先制の笛',i:'笛',d:'戦闘開始時 敵に10ダメージ'},
- fang:{n:'吸血の牙',i:'牙',d:'与えたダメージの5%回復・ただし与えるダメージ-20%'},
- edge:{n:'崖っぷちの勇気',i:'崖',d:'HPが30%以下のとき 与えるダメージ+20%'},
- glass:{n:'会心メガネ',i:'眼',d:'会心率+15%'},
- medal:{n:'勝者のメダル',i:'勲',d:'勝利するとHP+8'},
- pin:{n:'耳のヘアピン',i:'耳',d:'各戦闘の最初の一撃が2倍'},
- phoe:{n:'不死鳥の羽',i:'羽',d:'一度だけHP1で踏みとどまる'},
- card:{n:'商人の会員証',i:'券',d:'ショップの値段-25%'},
- vial:{n:'毒の小瓶',i:'瓶',d:'攻撃が当たるたび 毒1'},
- pick:{n:'熟成ピクルス',i:'漬',d:'ポイント獲得のたび+1'},
- scope:{n:'弱点スコープ',i:'鏡',d:'戦闘開始時 敵に弱体2'},
- powder:{n:'ふにゃふにゃ粉',i:'粉',d:'戦闘開始時 敵にふにゃ2'},
- herb:{n:'解毒のハーブ',i:'草',d:'状態異常抵抗+15%'},
- tie:{n:'大人のネクタイ',i:'紳',d:'赤ちゃんにならない'},
- vow:{n:'不殺の誓い',i:'誓',d:'自分のターンにアタックを使わなかったら、ターン終了時 敵に最大HPの10%ダメージ'},
- helm:{n:'猪突の兜',i:'兜',d:'自分のターンにアタックだけを使ったら、次に受けるダメージ-30%'},
- shoe:{n:'勢いのスニーカー',i:'靴',d:'1ターンにカードを4枚以上使うと、次のターン1枚多く引く'},
- charm:{n:'うさぎの守り札',i:'札',d:'取得時 最大HP+10%・回避率+10%',on:p=>{const v=Math.round(p.maxHp*.1);p.maxHp+=v;p.hp+=v;p.eva+=10}},
- sHeal:{n:'王家の薬草袋',i:'薬',st:1,d:'カード合成のたびにHP30回復'},
- sCard:{n:'王立図書館の推薦状',i:'書',st:1,d:'受け取ったとき カード報酬を2回選べる'},
- sStat:{n:'王家の紋章',i:'紋',st:1,d:'攻撃+1・防御+1',on:p=>{p.atk++;p.def++}},
- sGamble:{n:'王様の気まぐれ宝箱',i:'宝',st:1,d:'ボス以外のランダムなレリックを2つもらえる。ただし最初の戦闘ではカード報酬とゴールドがもらえない'},
- crown:{n:'王者の冠',i:'冠',b:1,d:'毎ターン エネルギー+1'},
- scepter:{n:'毒の王笏',i:'杖',b:1,d:'毒を与えるたび さらに+3'},
- bandana:{n:'狂戦士のバンダナ',i:'巾',b:1,d:'戦闘開始時 筋力+4'},
- earmuff:{n:'要塞の耳当て',i:'塞',b:1,d:'ブロックがターンをまたいで残る'},
- moon:{n:'月のうさぎ',i:'月',b:1,d:'毎ターン 1枚多く引く'},
- doll:{n:'呪術人形',i:'呪',b:1,d:'戦闘開始時 敵に弱体3・ふにゃ3'},
- bell:{n:'双子の鈴',i:'鈴',b:1,d:'0コストのカードを使うたび 1枚引く'},
- heart:{n:'不屈の心臓',i:'心',b:1,d:'ターン終了時 残りエネルギー1につき ブロック6'},
- chain:{n:'絆の鎖',i:'鎖',b:1,d:'毎ターン エネルギー+1・ただしカード削除ができなくなる'},
- glove:{n:'連撃のグローブ',i:'拳',b:1,d:'2回以上攻撃するカードの回数+1'}
-};
-const START_R=Object.keys(RL).filter(k=>RL[k].st),NORMAL_R=Object.keys(RL).filter(k=>!RL[k].b&&!RL[k].st),BOSS_R=Object.keys(RL).filter(k=>RL[k].b);
+const START_R=Object.keys(RL).filter(k=>RL[k].st),NORMAL_R=Object.keys(RL).filter(k=>!RL[k].b&&!RL[k].st&&!RL[k].f&&!RL[k].inn),FARM_R=Object.keys(RL).filter(k=>RL[k].f),INN_R=Object.keys(RL).filter(k=>RL[k].inn),BOSS_R=Object.keys(RL).filter(k=>RL[k].b);
 
 const EN={
- koma:{n:'小松ナイト',s:'koma',hp:36,atk:7,mv:[{n:'斬りつけ',a:1},{n:'小松ガード',b:9},{n:'二段斬り',a:.6,h:2}]},
- chili:{n:'唐辛シールダー',s:'chili',hp:42,atk:6,mv:[{n:'シールドバッシュ',a:1,b:5},{n:'鉄壁',b:13},{n:'激辛オーラ',s:2}]},
- carrot:{n:'ニンジンランサー',s:'carrot',hp:32,atk:9,mv:[{n:'突き',a:1},{n:'三段突き',a:.45,h:3},{n:'構え',s:2}]},
- onion:{n:'タマネギボマー',s:'onion',hp:30,atk:8,mv:[{n:'タマネギ爆弾',a:1.4},{n:'涙ガス',w:2,z:1},{n:'投げつけ',a:.8,v:1}]},
- piman:{n:'ピーマンアーチャー',s:'piman',hp:30,atk:7,mv:[{n:'苦い矢',a:.9,w:1},{n:'連射',a:.4,h:3},{n:'狙い撃ち',a:1.5}]},
- ichigo:{n:'イチゴスライム',s:'ichigo',hp:34,atk:6,mv:[{n:'ぷるぷる体当たり',a:1},{n:'甘い香り',w:1,z:1},{n:'分裂の構え',b:8,hl:5}]},
- sakuranbo:{n:'サクランボツインズ',s:'sakuranbo',hp:36,atk:5,mv:[{n:'ダブルアタック',a:.7,h:2},{n:'ツインガード',b:10},{n:'くるくる回転',a:.5,h:3,z:1}]},
- mikan:{n:'ミカンボクサー',s:'mikan',hp:38,atk:8,mv:[{n:'ジャブ',a:.45,h:2},{n:'ストレート',a:1.3},{n:'ガード',b:8,s:1}]},
- nasu:{n:'ナスメイジ',s:'nasu',hp:34,atk:8,mv:[{n:'ナスファイア',a:1.3},{n:'闇の回復',hl:10},{n:'ナスの呪い',v:2,x:1}]},
- corn:{n:'コーンガンナー',s:'corn',hp:38,atk:6,mv:[{n:'ポップコーン乱射',a:.35,h:5},{n:'装填',s:3},{n:'ヒゲ縛り',a:.5,w:2}]},
- kabu:{n:'カブ忍者',s:'kabu',hp:33,atk:9,mv:[{n:'手裏剣',a:.5,h:2},{n:'煙玉',b:10,z:1,dc:1},{n:'居合い',a:1.6}]},
- gobou:{n:'ゴボウ剣士',s:'gobou',hp:40,atk:8,mv:[{n:'ゴボウ斬り',a:1.2},{n:'根性',s:2,b:6},{n:'突撃',a:1,v:1}]},
- banana:{n:'バナナブーメラン',s:'banana',hp:34,atk:8,mv:[{n:'ブーメラン',a:.6,h:2},{n:'すべる皮',z:2},{n:'キャッチ',b:9}]},
- budou:{n:'ブドウ魔導士',s:'budou',hp:32,atk:8,mv:[{n:'ブドウ弾',a:.4,h:3},{n:'発酵の呪い',x:2,w:1},{n:'房の再生',hl:12}]},
- kiwi:{n:'キウイローラー',s:'kiwi',hp:40,atk:9,mv:[{n:'ローリング',a:1.2},{n:'毛玉ガード',b:10},{n:'酸っぱい汁',v:1,x:1}]},
- lemon:{n:'レモンスナイパー',s:'lemon',hp:30,atk:10,mv:[{n:'すっぱい狙撃',a:1.4},{n:'レモン汁',z:1,v:1,dc:1},{n:'リロード',s:2}]},
- zakuro:{n:'ザクロ爆弾兵',s:'zakuro',hp:36,atk:9,mv:[{n:'ザクロ爆弾',a:1.5},{n:'種散弾',a:.3,h:5},{n:'導火線',s:3}]},
- avocado:{n:'アボカド怪僧',s:'avocado',hp:40,atk:8,mv:[{n:'種の念仏',z:2,x:2},{n:'皮の守り',b:12,hl:8},{n:'ぬるぬる掌底',a:1.1}]},
- goya:{n:'ゴーヤ狂戦士',s:'goya',hp:38,atk:10,mv:[{n:'苦い連撃',a:.5,h:3},{n:'狂化',s:3},{n:'トゲ体当たり',a:1.4,v:1,bl:1}]},
- ninniku:{n:'ニンニク呪術師',s:'ninniku',hp:34,atk:8,mv:[{n:'匂いの霧',w:2,p:4},{n:'赤ちゃん返りの術',bb:2},{n:'呪いの一撃',a:1.2,x:1}]},
- renkon:{n:'レンコン重砲',s:'renkon',hp:44,atk:9,mv:[{n:'穴あき砲',a:1.6},{n:'装甲',b:14},{n:'のぞき穴',v:2}]},
- momo:{n:'モモ聖騎士',s:'momo',hp:42,atk:8,mv:[{n:'聖なる桃剣',a:1.2},{n:'癒しの香り',hl:12,b:6},{n:'ももカウンター',b:10,s:2}]},
- mango:{n:'マンゴー拳闘士',s:'mango',hp:38,atk:9,mv:[{n:'南国ラッシュ',a:.35,h:5},{n:'完熟アッパー',a:1.4,z:1},{n:'気合',s:2,b:5}]}
+ koma:{n:'小松ナイト',s:'koma',hp:55,atk:12,fixed:1,mv:[{n:'斬りつけ',a:1},{n:'小松ガード',b:10,s:1},{n:'二段斬り',a:5/12,h:2}]},
+ chili:{n:'唐辛シールダー',s:'chili',hp:55,atk:7,fixed:1,mv:[{n:'シールドバッシュ',a:1,b:9},{n:'鉄壁',b:13},{n:'激辛オーラ',s:2}]},
+ carrot:{n:'ニンジンランサー',s:'carrot',hp:42,atk:11,fixed:1,mv:[{n:'突き',a:1},{n:'三段突き',a:5/11,h:3},{n:'構え',s:2}]},
+ onion:{n:'タマネギボマー',s:'onion',hp:60,atk:10,fixed:1,mv:[{n:'タマネギ爆弾',bomb:23/10,fuse:2},{n:'涙ガス',w:2,z:2},{n:'投げつけ',a:.8,v:1}]},
+ piman:{n:'ピーマンアーチャー',s:'piman',hp:45,atk:8,fixed:1,mv:[{n:'苦い矢',a:7/8,w:2},{n:'連射',a:3/8,h:3},{n:'狙い撃ち',a:13/8}]},
+ ichigo:{n:'イチゴスライム',s:'ichigo',hp:44,atk:12,fixed:1,mv:[{n:'ぷるぷる体当たり',a:1},{n:'甘い香り',w:1,z:1,v:2},{n:'分裂の構え',b:8,hl:8}]},
+ sakuranbo:{n:'サクランボツインズ',s:'sakuranbo',hp:47,atk:6,fixed:1,mv:[{n:'ダブルアタック',a:4/6,h:2},{n:'ツインガード',b:10},{n:'くるくる回転',a:.5,h:3,z:1}]},
+ mikan:{n:'ミカンボクサー',s:'mikan',hp:55,atk:10,fixed:1,mv:[{n:'ジャブ',a:.5,h:2},{n:'ストレート',a:1.3},{n:'ガード',b:8,s:1}]},
+ nasu:{n:'ナスメイジ',s:'nasu',hp:100,atk:1,healClean:1,ps:'HPを回復するたび、自分の状態異常を1つ消す',mv:[{n:'ナスファイア',a:20},{n:'闇の回復',hl:20},{n:'ナスの呪い',v:2,x:3}]},
+ corn:{n:'コーンガンナー',s:'corn',hp:55,atk:1,hitBlk:3,ps:'ダメージを受けるたび、ブロック+3',mv:[{n:'ポップコーン乱射',a:2,h:5},{n:'装填',s:2},{n:'ヒゲ縛り',b:20,w:2}]},
+ kabu:{n:'カブ忍者',s:'kabu',hp:80,atk:1,fuseTax:2,ps:'この敵との戦闘中、合成カードのコスト+2',mv:[{n:'手裏剣',a:4,h:3},{n:'煙玉',b:10,z:1,dc:3},{n:'居合い',a:17}]},
+ gobou:{n:'ゴボウ剣士',s:'gobou',hp:80,atk:1,mv:[{n:'ゴボウ斬り',a:13},{n:'根性',b:6,s:2},{n:'突撃',a:8,v:1},{n:'根こそぎ斬り',sd:1,dd:2}]},
+ banana:{n:'バナナブーメラン',s:'banana',hp:85,atk:1,mv:[{n:'ブーメラン',a:6,h:2,stunX:2},{n:'すべる皮',z:2,stunCh:30},{n:'キャッチ',b:20,x:3}]},
+ budou:{n:'ブドウ魔導士',s:'budou',hp:90,atk:1,skillBlk:4,ps:'あなたがスキルカードを使うたび、ブロック+4',mv:[{n:'ブドウ弾',a:3,h:4},{n:'発酵の呪い',w:2,x:2},{n:'房の再生',hl:12,rg:4}]},
+ kiwi:{n:'キウイローラー',s:'kiwi',hp:80,atk:1,mv:[{n:'ローリング',a:10},{n:'毛玉ガード',b:10},{n:'酸っぱい汁',v:1,x:1}]},
+ lemon:{n:'レモンスナイパー',s:'lemon',hp:60,atk:1,drStack:1,ps:'ダメージを受けるたび、それ以降に受けるダメージ-1（戦闘中ずっと）',mv:[{n:'すっぱい狙撃',a:14},{n:'レモン汁',v:1,z:1,dc:1},{n:'リロード',s:5}]},
+ zakuro:{n:'ザクロ爆弾兵',s:'zakuro',hp:120,atk:1,deathBomb:30,ps:'倒されると爆発して30ダメージ（ブロックで防げる）',mv:[{n:'ザクロ爆弾',a:13},{n:'種散弾',a:2,h:5},{n:'導火線',s:3}]},
+ avocado:{n:'アボカド怪僧',s:'avocado',hp:200,atk:1,endBlk:15,ps:'敵ターンの終わりにブロック+15',mv:[{n:'種の念仏',z:2,x:2},{n:'皮の守り',b:12,hl:8},{n:'ぬるぬる掌底',a:8}]},
+ goya:{n:'ゴーヤ狂戦士',s:'goya',hp:140,atk:1,halfStr:3,ps:'HPが半分以下になると筋力+3（1回）',mv:[{n:'苦い連撃',a:5,h:3},{n:'狂化',s:3},{n:'トゲ体当たり',a:14,v:1,bl:1}]},
+ ninniku:{n:'ニンニク呪術師',s:'ninniku',hp:130,atk:1,startArt:2,ps:'戦闘開始時にアーティファクト2',mv:[{n:'匂いの霧',w:2,p:4},{n:'赤ちゃん返りの術',bb:2},{n:'呪いの一撃',a:9,x:1}]},
+ renkon:{n:'レンコン重砲',s:'renkon',hp:150,atk:1,armorPerTurn:3,ps:'毎ターン アーマー+3',mv:[{n:'穴あき砲',a:14},{n:'装甲',b:14},{n:'のぞき穴',v:2}]},
+ momo:{n:'モモ聖騎士',s:'momo',hp:160,atk:1,healStr:1,ps:'HPを回復するたび筋力+1',mv:[{n:'聖なる桃剣',a:9},{n:'癒しの香り',b:6,hl:12},{n:'ももカウンター',b:10,s:2}]},
+ mango:{n:'マンゴー拳闘士',s:'mango',hp:150,atk:1,hitStr:1,ps:'攻撃を受けるたび筋力+1',mv:[{n:'南国ラッシュ',a:3,h:5},{n:'完熟アッパー',a:12,z:1},{n:'気合',b:5,s:2}]},
 };
 const EL={
- broc:{n:'ブロッコリー将軍',s:'broc',hp:75,atk:10,mv:[{n:'号令',s:3},{n:'大斬り',a:1.6},{n:'森の盾',b:16},{n:'連撃',a:.6,h:3}]},
- pota:{n:'ジャガイモゴーレム',s:'pota',hp:95,atk:9,mv:[{n:'押しつぶし',a:1.5},{n:'芽吹き',hl:15},{n:'岩の構え',b:20},{n:'地ならし',a:.5,h:3,v:1}]},
- suika:{n:'スイカ大将',s:'suika',hp:90,atk:10,mv:[{n:'種マシンガン',a:.3,h:6,bl:1},{n:'スイカ割り',a:1.7},{n:'皮の鎧',b:18},{n:'夏バテの呪い',w:2,z:1}]},
- pump:{n:'カボチャナイトメア',s:'pump',hp:85,atk:11,mv:[{n:'カボチャ爆炎',a:1.4},{n:'悪夢',w:2,v:2},{n:'ランタン乱舞',a:.45,h:4},{n:'闇吸収',a:.8,hl:10}]},
- witch:{n:'キャベツの魔女',s:'witch',hp:78,atk:10,mv:[{n:'葉っぱ嵐',a:.4,h:5},{n:'魔女の呪い',v:2,x:2},{n:'保護の葉',b:15,hl:6},{n:'魔力集中',s:3}]},
- pine:{n:'パイナップル重騎士',s:'pine',hp:100,atk:11,mv:[{n:'トゲの突進',a:1.3,v:1,bl:1},{n:'王冠の盾',b:20},{n:'あまずっぱい誘惑',bb:2},{n:'パイン乱舞',a:.4,h:4}]},
- durian:{n:'ドリアン魔将',s:'durian',hp:110,atk:12,mv:[{n:'悪臭の嵐',w:2,z:1,dc:2},{n:'トゲの鉄槌',a:1.6},{n:'鎧の殻',b:22},{n:'千本トゲ',a:.3,h:7}]},
- melon:{n:'マスクメロン卿',s:'melon',hp:100,atk:11,mv:[{n:'高級な一撃',a:1.5},{n:'網目の結界',b:18,x:2},{n:'メロメロ',bb:2,w:1},{n:'貴族の宴',hl:20,s:2}]},
- arti:{n:'アーティチョーク大司教',s:'arti',hp:105,atk:11,mv:[{n:'鱗の祈り',b:16,hl:10},{n:'破門',v:2,x:2},{n:'聖鱗弾',a:.4,h:5},{n:'信仰の力',s:4}]}
+ broc:{n:'ブロッコリー将軍',s:'broc',hp:98,atk:12,fixed:1,cap:33,ps:'1ターンに33ダメージまでしか受けない。33ダメージ受けると自分にふにゃ1',mv:[{n:'号令',s:3},{n:'大斬り',a:16/12},{n:'森の盾',b:16},{n:'連撃',a:4/12,h:3}]},
+ pota:{n:'ジャガイモゴーレム',s:'pota',hp:124,atk:11,fixed:1,stunAt:70,ps:'HPが70以下（最大HPの約56%）になると1回スタンする',mv:[{n:'押しつぶし',a:17/11},{n:'芽吹き',hl:15},{n:'岩の構え',b:20},{n:'地ならし',a:6/11,h:3,v:1}]},
+ suika:{n:'スイカ大将',s:'suika',hp:100,atk:12,fixed:1,soft:30,ps:'1ターンに30ダメージ受けると、次の行動の与えるダメージ-30%',mv:[{n:'種マシンガン',a:2/12,h:8,bl:1},{n:'スイカ割り',a:15/12},{n:'皮の鎧',b:18},{n:'夏バテの呪い',w:2,z:2}]},
+ pump:{n:'カボチャナイトメア',s:'pump',hp:180,atk:1,skillDmg:2,ps:'あなたがスキルカードを使うたび、次の敵ターンに受けるダメージ+2',mv:[{n:'カボチャ爆炎',a:15},{n:'悪夢',v:2,w:2},{n:'ランタン乱舞',a:4,h:4},{n:'闇吸収',a:10,hl:10}]},
+ witch:{n:'キャベツの魔女',s:'witch',hp:250,atk:1,artPerTurn:1,vulnDeb:1,ps:'毎ターン、アーティファクト+1。状態異常がかかっている間は受けるダメージ+50%',mv:[{n:'葉っぱ嵐',a:4,h:5},{n:'魔女の呪い',v:2,x:2},{n:'保護の葉',b:15,hl:6},{n:'魔力集中',s:2}]},
+ pine:{n:'パイナップル重騎士',s:'pine',hp:170,atk:1,armorPerTurn:3,armorAt:10,ps:'毎ターン、アーマー+3。アーマーが初めて10以上になったとき筋力+2',mv:[{n:'トゲの突進',a:14,v:1,bl:1},{n:'王冠の盾',b:20},{n:'あまずっぱい誘惑',bb:2,w:2},{n:'パイン乱舞',a:4,h:4}]},
+ durian:{n:'ドリアン魔将',s:'durian',hp:300,atk:1,dizzyOnAtk:1,dizzyStr:1,dizzyPlay:1,ps:'攻撃を受けるたび（1ヒットごと）山札にめまいカード+1。めまいカードが廃棄されるたび筋力+1。この戦闘中、めまいカードは1コストで使え、使うと廃棄されず捨て札に行く',mv:[{n:'悪臭の嵐',w:2,z:1,dc:2},{n:'トゲの鉄槌',a:19},{n:'鎧の殻',b:45},{n:'千本トゲ',a:3,h:7}]},
+ melon:{n:'マスクメロン卿',s:'melon',hp:380,atk:1,cardPen:2,ps:'あなたがカードを使うたび、そのターン中は筋力と防御が-2（ターン終了でリセット）',mv:[{n:'高級な一撃',a:40},{n:'網目の結界',b:40,arm:5},{n:'メロメロ',w:2,bb:2},{n:'貴族の宴',s:2,hl:30}]},
+ arti:{n:'アーティチョーク大司教',s:'arti',hp:450,atk:1,selfDeb:3,turn4:1,ps:'毎ターン開始時に自分に弱体3・ふにゃ3。4ターン目から与えるダメージ2倍・筋力+2',mv:[{n:'鱗の祈り',b:25,hl:20},{n:'破門',v:2,w:2},{n:'聖鱗弾',a:4,h:5},{n:'信仰の力',s:2}]},
 };
 const BS={
- hakusai:{n:'ハクサイ大帝',s:'hakusai',hp:210,atk:12,mv:[{n:'白菜プレス',a:1.5},{n:'葉の鎧',b:20,s:2},{n:'千枚漬け',a:.4,h:5,bl:1},{n:'大帝の威光',v:2,w:2}]},
- takenoko:{n:'タケノコ竜王',s:'takenoko',hp:380,atk:16,mv:[{n:'竜の爪',a:.6,h:3},{n:'伸び盛り',s:4,b:24},{n:'竹槍の雨',a:.35,h:6,bl:2},{n:'竜の咆哮',v:2,w:2,z:1},{n:'竜炎',a:1.8}]},
- daikon:{n:'魔王ダイコン',s:'daikon',hp:600,atk:20,last:1,mv:[{n:'大根おろし嵐',a:.4,h:6},{n:'魔王の威圧',v:3,w:2,s:3},{n:'白き鉄槌',a:2},{n:'赤子返し',bb:2,x:2},{n:'根の再生',hl:40,b:30},{n:'魔王の一閃',a:1.2,h:2}]},
- dokuringo:{n:'呪縛女王ドクリンゴ',s:'dokuringo',hp:560,atk:19,last:1,mv:[{n:'毒リンゴの雨',a:.4,h:5,p:3},{n:'呪縛の鎖',bind:2,v:2},{n:'女王の一噛み',a:1.6,x:2},{n:'禁断の果実',hl:40,s:3},{n:'魔鏡の光',z:2,w:2,dc:2}]},
- dragon:{n:'破滅神ドラゴンフルーツ',s:'dragon',hp:640,atk:21,last:1,mv:[{n:'破滅の宣告',doom:3},{n:'竜鱗の炎',a:1.5},{n:'鱗の嵐',a:.35,h:6},{n:'再誕の鱗',b:35,s:3},{n:'終焉の咆哮',v:2,w:2,bb:1}]}
+ hakusai:{n:'ハクサイ大帝',s:'hakusai',hp:250,atk:14,fixed:1,angerStr:2,powDz:1,ps:'パワーを使うたび、山札にめまいカードを1枚加える',mv:[{n:'白菜プレス',a:17/14},{n:'葉の鎧',b:15,s:1},{n:'千枚漬け',a:5/14,h:4,bl:1},{n:'大帝の威光',v:1,w:2},{n:'くらくら白菜嵐',dc:3}]},
+ takenoko:{n:'タケノコ竜王',s:'takenoko',hp:330,atk:1,angerStr:2,leech:1,startArt:3,ps:'ダメージを与えるたび、あなたのHP+1・この敵のブロック+3。戦闘開始時にアーティファクト3',mv:[{n:'竜の爪',a:9,h:3},{n:'伸び盛り',b:24,s:1},{n:'竹槍の雨',a:5,h:5,bl:2},{n:'竜の咆哮',v:2,w:2,z:1},{n:'竜炎',a:28}]},
+ daikon:{n:'魔王ダイコン',s:'daikon',hp:350,atk:1,last:1,next:'daikon2',endTurnHit:5,ps:'第一形態。あなたのターン終了時、最大HPの5%のダメージ。倒すと第二形態になる',mv:[{n:'大根おろし嵐',a:8,h:6},{n:'魔王の威圧',v:3,w:2,s:3},{n:'白き鉄槌',a:40},{n:'赤子返し',bb:2,x:2},{n:'根の再生',hl:40,b:30},{n:'魔王の一閃',a:24,h:2}]},
+ daikon2:{n:'真・魔王ダイコン',s:'daikon2',hp:550,atk:1,last:1,steal:1,ps:'第二形態。あなたのターン終了時、山札の一番上のカードを奪って使う。パワーならあなたをスタン、アタックなら筋力+2、スキルなら受けるダメージ-2',mv:[{n:'魔王の大根剣',a:30},{n:'千切り乱舞',a:6,h:6},{n:'闇の根張り',b:40,s:2},{n:'魔王の睨み',v:2,w:2,bind:1},{n:'終わりの一刀',a:45}]},
+ dokuringo:{n:'呪縛女王ドクリンゴ',s:'dokuringo',hp:700,atk:1,last:1,curseStart:1,powPoi:1,ps:'戦闘開始時、あなたに弱体99・ふにゃ99・阻害99・筋力-3・防御-3（消せない）。あなたがパワーを使うたび毒1',mv:[{n:'毒リンゴの雨',a:7,h:5,p:3},{n:'呪縛の鎖',v:2,bind:2},{n:'女王の一噛み',a:30,x:2},{n:'禁断の果実',s:2,hl:40},{n:'魔鏡の光',z:2,dc:2,s:1}]},
+ dragon:{n:'破滅神ドラゴンフルーツ',s:'dragon',hp:800,atk:1,last:1,artPerTurn:3,ruinPer:4,ps:'毎ターン開始時にアーティファクト+3。あなたがカードを4枚使うたび山札に破滅の刻印を1枚加える',mv:[{n:'破滅の宣告',doom:3},{n:'竜鱗の炎',a:35},{n:'鱗の嵐',a:5,h:6},{n:'再誕の鱗',b:35,s:3}]},
 };
 const LASTB=['daikon','dokuringo','dragon'];
-[EN,EL,BS].forEach(o=>Object.values(o).forEach(x=>{x.hp=Math.round(x.hp*1.3);x.atk=Math.round(x.atk*1.2)}));
 const ACTS=[{n:'はじまりの畑',cls:'',nm:['koma','chili','carrot','onion','piman','ichigo','sakuranbo','mikan'],el:['broc','pota','suika']},
  {n:'夜の温室',cls:'a2',nm:['nasu','corn','kabu','gobou','banana','budou','kiwi','lemon'],el:['pump','witch','pine']},
  {n:'魔王の大農園',cls:'a3',nm:['zakuro','avocado','goya','ninniku','renkon','momo','mango'],el:['durian','melon','arti']}];
 const bossOf=()=>P.act==1?'hakusai':P.act==2?'takenoko':P.last;
-const KIND={battle:{n:'敵',i:'戦',d:'野菜・フルーツ怪人とバトル。勝つとゴールド・ポイント2・カード報酬'},elite:{n:'強敵',i:'強',d:'その層だけの強い怪人。勝つとレリック＋ポイント3＋カード報酬'},event:{n:'？',i:'？',d:'何かが起こる。選択肢で対応しよう'},rest:{n:'休憩',i:'休',d:'HP回復・カード合成・カード削除から1つ'},shop:{n:'商人',i:'商',d:'カード・レリック・回復・カード削除を買える'},boss:{n:'ボス',i:'王',d:'層のボス。1・2層はボスレリック、3層はラスボス'}};
-const ST=[['maxHp','最大HP',10,2,'',999],['atk','攻撃',1,3,'',999],['def','防御',1,3,'',999],['eva','回避率',3,2,'%',50],['crit','会心率',5,2,'%',100,'会心ダメージも+5%'],['res','状態異常抵抗',7.5,2,'%',75]];
+const KIND={battle:{n:'敵',i:'戦',d:'野菜・フルーツ怪人とバトル。勝つとゴールド・ポイント2・カード報酬'},elite:{n:'強敵',i:'強',d:'その層だけの強い怪人。勝つとレリック＋ポイント3＋カード報酬'},event:{n:'？',i:'？',d:'何かが起こる。選択肢で対応しよう'},rest:{n:'休憩',i:'休',d:'HP回復・カード合成・鍛錬から1つ'},shop:{n:'商人',i:'商',d:'カード・レリック・回復・カード削除を買える'},boss:{n:'ボス',i:'王',d:'層のボス。1・2層はボスレリック、3層はラスボス'}};
+const ST=[['maxHp','最大HP',15,2,'',999],['atk','攻撃',1,3,'',999],['def','防御',1,3,'',999],['eva','回避率',3,2,'%',50],['crit','会心率',5,2,'%',100,'会心ダメージも+5%'],['res','状態異常抵抗',4,1,'%',75]];
 const PST={vul:'弱体',weak:'ふにゃ',dz:'めまい',x:'阻害',baby:'赤ちゃん',bind:'束縛',doom:'破滅',poi:'毒'};
 const EMAP={v:'vul',w:'weak',z:'dz',x:'x',bb:'baby',bind:'bind',doom:'doom',p:'poi'};
 
@@ -376,35 +435,40 @@ const pickN=(arr,n)=>shuffle(arr).slice(0,n);
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
 let P,B,H={},busy=0,shop=null,drag=null;
 const has=id=>P&&P.relics.includes(id);
-const maxEn=()=>4+(has('crown')?1:0)+(has('chain')?1:0);
-const atkStat=()=>P?(B&&B.baby?0:P.atk)+(has('rear')?2:0):0;
-const defStat=()=>P?(B&&B.baby?0:P.def)+(has('icar')?2:0)-(B&&B.defM||0):0;
-const resRate=()=>Math.min(.85,(P.res+(has('herb')?15:0)+(B&&B.pw.res||0))/100);
+const rv=(id,k='v')=>has(id)?(RL[id][k]||0):0;
+const rd=id=>RL[id].d.replace(/\{v\}/g,RL[id].v).replace(/\{v2\}/g,RL[id].v2);
+const ON={turn:(p,r)=>{p.maxHp+=r.v;p.hp+=r.v},sStat:(p,r)=>{p.atk+=r.v;p.def+=r.v2},charm:(p,r)=>{const v=Math.round(p.maxHp*r.v/100);p.maxHp+=v;p.hp+=v;p.eva+=r.v2}};
+const maxEn=()=>4+rv('crown')+rv('chain')-(B&&B.enM||0)+(B&&B.kind=='elite'?rv('sFlag'):0);
+const atkStat=()=>P?(B&&B.baby?0:P.atk)+rv('rear'):0;
+const defStat=()=>P?(B&&B.baby?0:P.def)+rv('icar')-(B&&B.defM||0)-(B&&B.pen||0):0;
+const resRate=()=>Math.min(.85,(P.res+rv('herb')+(B&&B.pw.res||0))/100);
 
 function toast(t){const e=$('#toast');e.textContent=t;e.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(()=>e.style.display='none',2600)}
 main.addEventListener('click',ev=>{const gl=ev.target.closest('[data-g]');if(gl){toast(gl.dataset.g+'：'+GL[gl.dataset.g]);return}
+ const psE=ev.target.closest('[data-ps]');if(psE&&B){toast(`パッシブ：${B.e.ps}`);return}
  const it=ev.target.closest('#int');if(it&&B){toast(B.e.intent.map(m=>`${m.n}：${moveDesc(m)}`).join(' ／ '));return}
  const b=ev.target.closest('[data-a]');if(!b||b.disabled)return;H[b.dataset.a]?.(b.dataset.v)});
 hudEl.addEventListener('click',ev=>{const r=ev.target.closest('[data-r]');if(r){const x=RL[r.dataset.r];toast(`${x.n}：${x.d}`)}if(ev.target.closest('[data-deck]'))showDeck();if(ev.target.closest('[data-dex]'))showDex('card')});
 modal.addEventListener('click',ev=>{const t=ev.target.closest('[data-tab]');if(t){showDex(t.dataset.tab);return}
  const d=ev.target.closest('[data-det]');if(d){showDetail(d.dataset.det,1);return}
  if(ev.target.closest('[data-keep]')&&!ev.target.closest('[data-close]'))return;modal.className='';modal.innerHTML=''});
-function mvText(m,atk){const p=[];if(m.a)p.push(`${Math.round(atk*m.a)}ダメージ${m.h>1?'×'+m.h:''}`);if(m.b)p.push(`ブロック${m.b}`);if(m.s)p.push(`筋力+${m.s}`);if(m.hl)p.push(`回復${m.hl}`);for(const k in EMAP)if(m[k])p.push(`${PST[EMAP[k]]}${m[k]}`);if(m.bl)p.push(`出血カード${m.bl}`);if(m.dc)p.push(`めまいカード${m.dc}`);return p.join('・')}
+function mvText(m,atk){const p=[];if(m.sd)p.push(`筋力低下${m.sd}`);if(m.dd)p.push(`防御低下${m.dd}`);if(m.stunCh)p.push(`${m.stunCh}%でスタン`);if(m.stunX)p.push(`スタン中なら${m.stunX}倍`);if(m.rg)p.push(`再生${m.rg}`);if(m.bomb)p.push(`${m.fuse}ターン後に${Math.floor(atk*m.bomb+1e-9)}ダメージ`);if(m.a)p.push(`${Math.floor(atk*m.a+1e-9)}ダメージ${m.h>1?'×'+m.h:''}`);if(m.b)p.push(`ブロック${m.b}`);if(m.s)p.push(`筋力+${m.s}`);if(m.hl)p.push(`回復${m.hl}`);for(const k in EMAP)if(m[k])p.push(`${PST[EMAP[k]]}${m[k]}`);if(m.bl)p.push(`出血カード${m.bl}`);if(m.dc)p.push(`めまいカード${m.dc}`);return p.join('・')}
 function showDex(tab){
  const tabs={card:'カード',relic:'レリック',st:'状態異常',enemy:'敵'};let body='';
  if(tab=='card'){const RR={s:'スターター',c:'コモン',u:'アンコモン',r:'レア',x:'呪い・状態異常カード（敵が混ぜてくる）'};body='<p class="sub">カードをタップで詳細</p>'+Object.keys(RR).map(r=>`<h2>${RR[r]}</h2><div class="deckg">${Object.keys(CD).filter(k=>CD[k].r==r).map(id=>cardHTML(id,`data-det="${id}"`)).join('')}</div>`).join('')}
- if(tab=='relic')body=[['スターターレリック（王様からもらう）',START_R],['通常レリック（強敵・商人・イベント）',NORMAL_R],['ボスレリック（1層・2層ボス）',BOSS_R]].map(([t,l])=>`<h2>${t}</h2>`+l.map(r=>`<div class="row"><span class="dri ${RL[r].b?'bo':RL[r].st?'sr':''}">${RL[r].i}</span><span class="nm">${RL[r].n}<br><span class="sub">${RL[r].d}</span></span></div>`).join('')).join('');
+ if(tab=='relic')body=[['スターターレリック（王様からもらう）',START_R],['農家のレリック（1層ボスのあと）',FARM_R],['宿屋のレリック（2層ボスのあと）',INN_R],['通常レリック（強敵・商人・イベント）',NORMAL_R],['ボスレリック（1層・2層ボス）',BOSS_R]].map(([t,l])=>`<h2>${t}</h2>`+l.map(r=>`<div class="row"><span class="dri ${RL[r].b?'bo':RL[r].st?'sr':''}">${RL[r].i}</span><span class="nm">${RL[r].n}<br><span class="sub">${rd(r)}</span></span></div>`).join('')).join('');
  if(tab=='st')body='<h2>状態異常・用語</h2>'+Object.keys(GL).map(k=>`<div class="gl"><b>${k}</b>：${GL[k]}</div>`).join('')+'<h2>合成エンチャント</h2><p class="sub">休憩ステージのカード合成でランダムに1つつく</p>'+Object.values(ENCH).map(v=>`<div class="gl"><b>★</b>${v}</div>`).join('');
- if(tab=='enemy'){const row=(x,tag)=>`<div class="row" style="align-items:flex-start"><span style="flex:none;width:40px">${img(x.s,2)}</span><span class="nm">${x.n}${tag?` <span class="tag">${tag}</span>`:''}<br><span class="sub">HP${x.hp}・攻撃${x.atk}</span>${x.mv.map(m=>`<div class="mvl">${m.n}：${mvText(m,x.atk)}</div>`).join('')}</span></div>`;
-  body='<p class="sub">数値は基本値。層やステージが進むほど強くなる（ボスの数値は固定）。通常の敵と強敵は技をランダムに、ボスは上から順番に使う。</p>'+ACTS.map((a,i)=>`<h2>${i+1}層 ${a.n}</h2><p class="sub">2回行動率：通常${[10,20,30][i]}%・強敵${[25,33,50][i]}%・ボス${i<2?50:100}%</p>`+a.nm.map(k=>row(EN[k])).join('')+a.el.map(k=>row(EL[k],'強敵')).join('')+(i<2?[['hakusai','takenoko'][i]]:LASTB).map(k=>row(BS[k],i<2?'ボス':'ラスボス')).join('')).join('')}
+ if(tab=='enemy'){const row=(x,tag)=>`<div class="row" style="align-items:flex-start"><span style="flex:none;width:40px">${img(x.s,2)}</span><span class="nm">${x.n}${tag?` <span class="tag">${tag}</span>`:''}<br><span class="sub">HP${x.hp}</span>${x.mv.map(m=>`<div class="mvl">${m.n}：${mvText(m,x.atk)}</div>`).join('')}${x.ps?`<div class="mvl" style="color:var(--gold)">パッシブ：${x.ps}</div>`:''}</span></div>`;
+  body='<p class="sub">数値は各層の1ステージ目の値。ステージが1つ進むごとにHP+7%・攻撃+5%（層が変わるとリセット）。ボスの数値は固定。通常の敵と強敵は技をランダムに、ボスは上から順番に使う。</p>'+ACTS.map((a,i)=>`<h2>${i+1}層 ${a.n}</h2><p class="sub">2回行動率：通常${[10,20,30][i]}%・強敵${[25,33,50][i]}%・ボス${i<2?50:100}%</p>`+a.nm.map(k=>row(EN[k])).join('')+a.el.map(k=>row(EL[k],'強敵')).join('')+(i<2?[['hakusai','takenoko'][i]]:['daikon','daikon2','dokuringo','dragon']).map(k=>row(BS[k],i<2?'ボス':'ラスボス')).join('')).join('')}
  modal.innerHTML=`<div class="box" data-keep><div class="tabs">${Object.keys(tabs).map(k=>`<button data-tab="${k}" class="${k==tab?'on':''}">${tabs[k]}</button>`).join('')}<button data-close style="margin-left:auto">閉じる</button></div>${body}<div class="gap"></div><button data-close style="width:100%">閉じる</button></div>`;
  modal.className='on';modal.scrollTop=0}
 
-function hitsOf(c){let h=c.hits||1;if(h>=2&&has('glove'))h++;return h}
-const dynD=c=>c.dyn&&B?c.dmg+4*B.exh.length:c.dmg;
-const dispD=(c,m=1)=>B?calcP(dynD(c),m):Math.floor((c.dmg+atkStat())*m);
-function cardDesc(c,m=1){if(c.base)return c.base.map(b=>cardDesc(CD[b],c.dm||1)).join('<br>／<br>')+'<br><i>'+c.ench.map(e=>'★'+ENCH[e]).join('<br>')+'</i>';return c.d.replace('{D}',`<b>${c.dmg?dispD(c,m):''}</b>`).replace('{B}',`<b>${(c.blk||0)+defStat()}</b>`).replace('{H}',hitsOf(c)).replace('{P}',(c.poi||0)+(has('scepter')?3:0))}
-function cardHTML(id,attr='',cls=''){const c=CD[id];return `<div class="cd t-${c.t} r-${c.r} ${c.base?'fz':''} ${cls}" ${attr}><span class="co">${c.np?'×':c.c}</span><span class="nm">${c.n}</span><span class="ty">${TY[c.t]}</span><span class="ds"><span>${cardDesc(c)}</span></span></div>`}
+function hitsOf(c){let h=c.hits||1;if(h>=2)h+=rv('glove');return h}
+const dynD=c=>c.dynKind=='hp'?(P?Math.floor(P.maxHp*c.hpPct/100)*(P.maxHp>=c.hpDbl?2:1):0):c.dynKind=='blk'?(B?B.blk:0):c.dyn&&B?c.dmg+(c.per||0)*B.exh.length:c.dmg;
+const dispD=(c,m=1)=>B?calcP(dynD(c),m):Math.floor((dynD(c)+atkStat())*m);
+function cardDesc(c,m=1){if(c.base)return c.base.map(b=>cardDesc(CD[b],c.dm||1)).join('<br>／<br>')+'<br><i>'+c.ench.map(e=>'★'+ENCH[e]).join('<br>')+'</i>';const V={D:c.dmg?`<b>${dispD(c,m)}</b>`:'',B:`<b>${Math.max(0,(c.blk||0)+defStat())}</b>`,H:hitsOf(c),P:(c.poi||0)+rv('scepter'),V:c.vul,W:c.weak,Z:c.dz,X:c.hx,DR:c.draw,E:c.en,HL:c.heal,A:c.art,PV:c.v,PER:c.per,HP:c.hpCost,TH:c.execAt,MX:c.execX,SV:c.selfVul,DRN:c.drain,HD:c.held,L:c.left,SD:c.selfDmg,MU:c.maxUp,HPP:c.hpPct,HPD:c.hpDbl,GS:c.gstr,ES:c.estr,PE:c.pe};return c.d.replace(/\{(\w+)\}/g,(_,k)=>V[k]??'')}
+const costOf=c=>c.c+(B&&B.e&&B.e.fuseTax&&c.fused?B.e.fuseTax:0)+(B&&B.e&&B.e.dizzyPlay&&c===CD.dizzyc?1:0);
+function cardHTML(id,attr='',cls=''){const c=CD[id];return `<div class="cd t-${c.t} r-${c.r} ${c.base?'fz':''} ${cls}" ${attr}><span class="co">${c.np?'×':costOf(c)}</span><span class="nm">${c.n}</span><span class="ty">${TY[c.t]}</span><span class="ds"><span>${cardDesc(c)}</span></span></div>`}
 function showDetail(id,back){const c=CD[id];const txt=cardDesc(c)+(c.t=='p'?'パワー':'')+(c.blk?'ブロック':'')+(c.c?'エネルギー':'')+(id=='ruin'?'破滅':'');
  modal.innerHTML=`<div class="box">${cardHTML(id,'','huge')}${Object.keys(GL).filter(k=>txt.includes(k)||(k=='筋力'&&c.pw=='str')).map(k=>`<div class="gl"><b>${k}</b>：${GL[k]}</div>`).join('')}${back?'<button data-tab="card" style="width:100%">図鑑に戻る</button>':''}<p class="sub center">タップで閉じる</p></div>`;modal.className='on'}
 function showDeck(){const cnt={};P.deck.forEach(d=>cnt[d]=(cnt[d]||0)+1);
@@ -428,8 +492,8 @@ function title(){
  <div class="legend">${Object.values(KIND).map(k=>`<div><b style="font-weight:400;color:var(--gold)">${k.i} ${k.n}</b><br><span class="sub">${k.d}</span></div>`).join('')}</div>`;
 }
 function newGame(){
- Object.keys(CD).forEach(k=>{if(CD[k].fused)delete CD[k]});
- P={hp:70,maxHp:70,atk:0,def:0,eva:3,crit:5,res:0,pts:0,gold:80,act:1,floor:0,deck:['punch','punch','punch','punch','punch','guard','guard','guard','guard','slap'],relics:[],path:[],rm:100,cd:50,seen:[],noRew:0,last:LASTB[rnd(0,2)]};
+ Object.keys(CD).forEach(k=>{if(CD[k].fused||CD[k].rg||CD[k].tmp)delete CD[k]});
+ P={hp:100,maxHp:100,atk:0,def:0,eva:3,crit:5,res:0,pts:0,skipN:0,playN:0,gold:80,act:1,floor:0,deck:['punch','punch','punch','punch','punch','guard','guard','guard','guard','slap'],relics:[],path:[],rm:100,cd:50,seen:[],noRew:0,last:LASTB[rnd(0,2)]};
  showKing();
 }
 
@@ -441,19 +505,19 @@ function genOpts(f){
 }
 function showMap(){
  updHud();const f=P.floor+1,opts=genOpts(f);
- H={go:t=>{P.floor=f;P.path.push(t);if(t=='rest')showRest();else if(t=='event')showEvent();else if(t=='shop')showShop(true);else startBattle(t)}};
+ H={go:t=>{P.floor=f;P.path.push(t);if(has('sGrow')){P.maxHp+=rv('sGrow');P.hp+=rv('sGrow')}if(t=='rest')showRest();else if(t=='event'){if(Math.random()<.3){toast('？…野菜怪人が飛び出してきた！');startBattle('battle')}else showEvent()}else if(t=='shop')showShop(true);else startBattle(t)}};
  main.innerHTML=`<h2>第${P.act}層　${ACTS[P.act-1].n}</h2>`+pathBar()+`<div class="sub">ステージ${f}：どこへ進む？</div><div class="gap"></div><div class="cards">${opts.map(t=>`<button class="card" data-a="go" data-v="${t}"><span class="ic k-${t}">${KIND[t].i}</span><span class="tx"><b>${t=='boss'?(P.act==3?'ラスボス：':'')+BS[bossOf()].n:KIND[t].n+'ステージ'}</b><span>${KIND[t].d}</span></span></button>`).join('')}</div>
  <div class="panel"><div class="mini"><span>攻撃 +${P.atk}</span><span>防御 +${P.def}</span><span>回避 ${P.eva}%</span><span>会心 ${P.crit}%</span><span>会心ダメ ${100+P.cd}%</span><span>抵抗 ${P.res}%</span><span>デッキ ${P.deck.length}枚</span>${P.pts?`<span style="color:var(--gold)">ポイント ${P.pts}</span>`:''}</div>
  ${P.pts?'<div class="gap"></div><button data-a="stat" style="width:100%">ポイントを振る</button>':''}</div>`;
  H.stat=()=>showStat('ステータス',showMap);
 }
 
-function mkEnemy(kind){
- const A=ACTS[P.act-1],base={blk:0,str:0,poi:0,vul:0,weak:0,dz:0,x:0,mi:-1};
+function mkEnemy(kind,boost=1){
+ const A=ACTS[P.act-1],base={blk:0,str:0,poi:0,vul:0,weak:0,dz:0,x:0,mi:-1,art:0,armor:0,sleep:0,rg:0,dr:0,pumpB:0};
  if(kind=='boss'){const b=BS[bossOf()];return{...b,...base,maxHp:b.hp,sc:1,boss:1}}
  const b=kind=='elite'?EL[pickN(A.el,1)[0]]:EN[pickN(A.nm,1)[0]];
- const g=(P.act-1)*10+P.floor,sc=1+.1*(g-1),hp=Math.round(b.hp*sc);
- return{...b,...base,hp,maxHp:hp,atk:Math.round(b.atk*(1+.06*(g-1))),sc,elite:kind=='elite'};
+ const f=Math.max(1,P.floor),sc=1+.07*(f-1),hp=Math.round(b.hp*sc);
+ const hp2=Math.round(hp*boost);return{...b,...base,hp:hp2,maxHp:hp2,atk:b.atk*(1+.05*(f-1))*boost,sc,elite:kind=='elite'};
 }
 const dblRate=e=>e.last?1:e.boss?.5:(e.elite?[.25,.33,.5]:[.1,.2,.3])[P.act-1];
 function pickIntent(e){const one=()=>{let i;if(e.boss)i=(e.mi+1)%e.mv.length;else{do{i=rnd(0,e.mv.length-1)}while(i==e.mi&&e.mv.length>1&&!e.mv[i].a)}e.mi=i;return e.mv[i]};
@@ -461,19 +525,29 @@ function pickIntent(e){const one=()=>{let i;if(e.boss)i=(e.mi+1)%e.mv.length;els
  if(Math.random()<dblRate(e)){const c=e.mv.filter(m=>m!==m1&&!(m1.a&&m.a));if(!c.length)return;
   let m2=c[rnd(0,c.length-1)];if(e.boss)for(let k=1;k<=e.mv.length;k++){const x=e.mv[(e.mi+k)%e.mv.length];if(c.includes(x)){m2=x;break}}
   e.intent.push(m2)}}
-const calcE=a=>{const e=B.e;return Math.max(0,Math.floor((e.atk*a+e.str)*(e.weak?.75:1)*(B.vul?1.5:1)))};
-const calcP=(base,m=1)=>Math.max(0,Math.floor(m*(base+atkStat()+B.str)*(B.weak?.75:1)*(B.e.vul?1.5:1)*(has('fang')?.8:1)*(has('edge')&&P.hp<=P.maxHp*.3?1.2:1)));
-function intentText(e){return (e.intent.length>1?'【2回行動】':'')+e.intent.map(m=>{const p=[];if(m.a)p.push(`攻撃${calcE(m.a)}${m.h>1?'×'+m.h:''}`);if(m.b)p.push('防御');if(m.s)p.push('強化');if(m.hl)p.push('回復');if(Object.keys(EMAP).some(k=>m[k])||m.bl||m.dc)p.push('妨害');return `${m.n}（${p.join('＋')}）`}).join('→')}
-function moveDesc(m){const p=[];if(m.a)p.push(`${calcE(m.a)}ダメージ${m.h>1?'×'+m.h:''}`);if(m.b)p.push(`ブロック${Math.round(m.b*B.e.sc)}`);if(m.s)p.push(`筋力+${m.s}`);if(m.hl)p.push(`HP回復${Math.round(m.hl*B.e.sc)}`);for(const k in EMAP)if(m[k])p.push(`${PST[EMAP[k]]}${m[k]}`);if(m.bl)p.push(`出血カード${m.bl}`);if(m.dc)p.push(`めまいカード${m.dc}`);return p.join('・')}
-const critRate=()=>(P.crit+(has('glass')?15:0))/100;
-const evade=()=>Math.min(.6,(P.eva+(has('foot')?10:0))/100);
+const calcE=a=>{const e=B.e;return Math.max(0,Math.floor((e.atk*a+e.str)*(e.weak?.75:1)*(B.vul?1.5:1)*(e.softNow?.7:1)*(e.dmgX||1)+1e-9)+(e.pumpB||0))};
+const bandB=()=>has('bandana')&&P.hp<=P.maxHp/2?rv('bandana','v2'):0;
+const addGold=n=>{if(n<=0)return;P.gold+=n;if(has('gsprout')){P.maxHp+=rv('gsprout');P.hp+=rv('gsprout')}};
+const calcP=(base,m=1)=>Math.max(0,Math.floor(m*(base+atkStat()+B.str+bandB()-(B.pen||0))*(B.weak?.75:1)*(B.e.vul?1.5:1)*(has('fang')?1-rv('fang','v2')/100:1)*(has('edge')&&P.hp<=P.maxHp*rv('edge')/100?1+rv('edge','v2')/100:1)));
+function intentText(e){return (e.intent.length>1?'【2回行動】':'')+e.intent.map(m=>{const p=[];if(m.bomb)p.push(`爆弾設置（${m.fuse}ターン後に${calcE(m.bomb)}）`);if(m.a)p.push(`攻撃${calcE(m.a)}${m.h>1?'×'+m.h:''}`);if(m.b)p.push('防御');if(m.s)p.push('強化');if(m.hl)p.push('回復');if(Object.keys(EMAP).some(k=>m[k])||m.bl||m.dc||m.sd||m.dd||m.stunCh)p.push('妨害');if(m.rg)p.push('再生');return `${m.n}（${p.join('＋')}）`}).join('→')}
+function moveDesc(m){const p=[];if(m.sd)p.push(`筋力低下${m.sd}`);if(m.dd)p.push(`防御低下${m.dd}`);if(m.stunCh)p.push(`${m.stunCh}%でスタン`);if(m.stunX)p.push(`スタン中なら${m.stunX}倍`);if(m.rg)p.push(`再生${m.rg}`);if(m.bomb)p.push(`${m.fuse}ターン後に${calcE(m.bomb)}ダメージの爆弾`);if(m.a)p.push(`${calcE(m.a)}ダメージ${m.h>1?'×'+m.h:''}`);if(m.b)p.push(`ブロック${Math.round(m.b*B.e.sc)}`);if(m.s)p.push(`筋力+${m.s}`);if(m.hl)p.push(`HP回復${Math.round(m.hl*B.e.sc)}`);for(const k in EMAP)if(m[k])p.push(`${PST[EMAP[k]]}${m[k]}`);if(m.bl)p.push(`出血カード${m.bl}`);if(m.dc)p.push(`めまいカード${m.dc}`);return p.join('・')}
+const critRate=()=>(P.crit+rv('glass'))/100;
+const evade=()=>Math.min(.6,(P.eva+rv('foot'))/100);
 
-function startBattle(kind){
- const e=mkEnemy(kind);
- B={e,kind,draw:shuffle(P.deck),hand:[],disc:[],exh:[],en:0,blk:0,armor:0,art:0,defM:0,noDraw:0,str:has('bandana')?4:0,vul:0,weak:0,dz:0,x:0,baby:0,bind:0,doom:0,poi:0,dodge:0,first:1,pw:{},turn:0,played:0,pids:[]};
+function startBattle(kind,opt={}){
+ const e=mkEnemy(kind,opt.boost||1);
+ B={e,kind,draw:shuffle(P.deck),hand:[],disc:[],exh:[],en:0,blk:0,armor:0,art:0,defM:0,noDraw:0,str:rv('bandana'),vul:0,weak:0,dz:0,x:0,baby:0,bind:0,doom:0,poi:0,dodge:0,first:1,pw:{},turn:0,played:0,pids:[]};
  if(P.mtBuff>0){B.str+=3;P.mtBuff--;setTimeout(()=>fx('p','筋力+3','buf'),300)}
+ B.opt=opt;B.tmpN=0;
+ if(e.curseStart){B.vul+=99;B.weak+=99;B.x+=99;B.str-=3;B.defM+=3;B.lock=1}
  if(P.defDown){B.defM=2;P.defDown=0}
- if(has('scope'))e.vul+=2;if(has('powder'))e.weak+=2;if(has('doll')){e.vul+=3;e.weak+=3}
+ if(P.enDown>0){B.enM=1;P.enDown--;setTimeout(()=>fx('p','エネルギー-1','deb'),300)}
+ if(P.weakStart>0){B.weak+=2;P.weakStart--}
+ if(P.vulStart>0){B.vul+=2;P.vulStart--}
+ if(P.errand){B.vul+=2;B.weak+=2;B.errand=1;P.errand=0}
+ if(has('onigiri')&&(kind=='elite'||kind=='boss')){const h=Math.min(rv('onigiri'),P.maxHp-P.hp);P.hp+=h;if(h)setTimeout(()=>fx('p','おにぎり +'+h,'heal'),400)}
+ e.art=e.startArt||0;
+ e.vul+=rv('scope')+rv('doll');e.weak+=rv('powder')+rv('doll','v2');
  pickIntent(e);
  main.innerHTML=pathBar()+`<div id="stage" class="${ACTS[P.act-1].cls}">
   <div class="pbox"><div>うさみみ</div><div class="st" id="pst"></div></div>
@@ -486,25 +560,47 @@ function startBattle(kind){
  <div id="hand"></div>`;
  H={end:endTurn};
  log(kind=='boss'?`${e.n}が立ちはだかる！`:`${e.n}が現れた！`);
- if(has('whis'))e.hp-=10;
+ if(has('whis'))e.hp-=rv('whis');
  startTurn();
 }
 function log(t){const l=$('#elog');if(l)l.textContent=t}
 function drawN(n){if(B.noDraw)return;for(let i=0;i<n;i++){if(B.hand.length>=10)break;if(!B.draw.length){if(!B.disc.length)break;B.draw=shuffle(B.disc);B.disc=[]}B.hand.push(B.draw.pop())}}
 function gainBlk(n){n=Math.round(n);if(n<=0)return;B.blk+=n;fx('p','盾+'+n,'blk')}
-function addPoi(n){n+=has('scepter')?3:0;B.e.poi+=n;fx('e','毒+'+n,'deb')}
-function loseHp(n){P.hp-=n;fx('p','-'+n,'dmg');shake('p');
- if(P.hp<=0&&has('phoe')){P.hp=1;P.relics=P.relics.filter(r=>r!='phoe');fx('p','不死鳥!','buf');log('不死鳥の羽が燃えて踏みとどまった！')}}
+function eDeb(k,n,label){const e=B.e;if(e.art>0){e.art--;fx('e','アーティファクト','blk');return false}e[k]+=n;fx('e',label,'deb');if(has('prank'))healP(rv('prank'));return true}
+function addPoi(n){n+=rv('scepter');eDeb('poi',n,'毒+'+n)}
+function loseHp(n){if(B&&has('lid')){const left=Math.max(0,rv('lid')-(B.lost||0));if(n>left){n=left;fx('p','鍋ぶた!','blk')}B.lost=(B.lost||0)+n}if(n<=0)return;
+ P.hp-=n;fx('p','-'+n,'dmg');shake('p');
+ if(B&&has('surprise')&&!B.hurt){B.hurt=1;drawN(rv('surprise'));fx('p','びっくり！','buf')}
+ if(P.hp<=0&&has('phoe')){P.hp=Math.max(1,Math.round(P.maxHp*rv('phoe')/100));P.relics=P.relics.filter(r=>r!='phoe');fx('p','不死鳥!','buf');log('不死鳥の羽で復活した！')}}
+function tmpCard(orig){const id='tmp'+(B.tmpN++)+'_'+Date.now().toString(36);CD[id]={...CD[orig],c:0,tmp:1,orig};return id}
+const realId=id=>CD[id].tmp?CD[id].orig:id;
+function lockFix(){if(B&&B.lock){B.vul=Math.max(B.vul,99);B.weak=Math.max(B.weak,99);B.x=Math.max(B.x,99)}}
+function clearP(){Object.keys(PST).forEach(k=>B[k]=0);lockFix()}
+function pDmg(n){n=Math.round(n);const a=Math.min(B.blk,n);B.blk-=a;n-=a;if(n>0)loseHp(n);else fx('p','ガード','blk')}
+function morph(e){const n=BS[e.next];Object.assign(e,{...n,maxHp:n.hp,hp:n.hp,blk:0,str:0,poi:0,vul:0,weak:0,dz:0,x:0,mi:-1,art:0,armor:0,sleep:0,rg:0,dr:0,pumpB:0,angry:0,endTurnHit:0,next:n.next,bombs:[]});pickIntent(e);const el=$('#en');if(el)el.innerHTML=img(n.s,6)+'<div class="shadow"></div>';log(`${e.n}が真の姿を現した！`);fx('e','第二形態！','buf')}
+function exh(id){if(B.e.dizzyStr&&realId(id)=='dizzyc'&&B.e.hp>0){B.e.str+=1;fx('e','筋力+1','buf')}B.exh.push(id);if(has('trash')&&B.e.hp>0){const v=rv('trash');hurtE(v,'燃 ')}}
 function startTurn(){
- B.turn++;B.noDraw=0;B.played=0;B.atkN=0;B.othN=0;B.pids=[];if(!has('earmuff'))B.blk=0;
+ B.turn++;lockFix();B.lost=0;B.e.tdmg=0;B.e.capHit=0;
+ if(B.stunNext){B.stunNext=0;B.stunTurn=1;setTimeout(()=>{fx('p','スタン','deb');log('スタンして動けない！')},200)}
+ if(B.e.artPerTurn)B.e.art+=B.e.artPerTurn;
+ if(B.e.selfDeb){B.e.vul+=B.e.selfDeb;B.e.weak+=B.e.selfDeb}
+ if(B.e.turn4&&B.turn==4){B.e.dmgX=2;B.e.str+=2;log(`${B.e.n}の力が目覚めた！与ダメージ2倍`)}B.noDraw=0;B.played=0;B.atkN=0;B.othN=0;B.pids=[];if(!has('earmuff'))B.blk=0;
  if(B.poi>0){loseHp(B.poi);B.poi--;if(P.hp<=0){ub();return setTimeout(lose,600)}}
- B.en=maxEn()+(B.turn==1&&has('nasu')?2:0);
+ B.en=maxEn()+(B.turn==1?rv('nasu'):0)+(B.pw.hEn||0)+(B.carry||0);B.carry=0;
+ if(has('hglass')){P.hg=(P.hg||0)+1;if(P.hg>=rv('hglass')){P.hg=0;B.en+=rv('hglass','v2');fx('p','砂時計 エネルギー+'+rv('hglass','v2'),'buf')}}
+ if(B.turn==1&&has('leaf'))gainBlk(rv('leaf'));
+ if(B.turn==1&&has('fBurst'))B.en+=rv('fBurst');
+ if(has('fCoin')&&P.gold>=rv('fCoin')){P.gold-=rv('fCoin');B.en+=rv('fCoin','v2');fx('p','貯金箱 エネルギー+'+rv('fCoin','v2'),'buf')}
+ if(B.turn==2&&has('bloom'))gainBlk(rv('bloom'));
  if(B.pw.metal)gainBlk(B.pw.metal);
  if(B.pw.pfield)addPoi(B.pw.pfield);
- if(has('sprout'))healP(2);
- drawN(5+(has('moon')?1:0)+(B.pw.harvest||0)+(B.turn==1&&has('clover')?2:0)+(B.extra||0));B.extra=0;
+ if(has('sprout'))healP(rv('sprout'));
+ drawN(5+rv('moon')+(B.kind=='elite'?rv('sFlag'):0)+(B.pw.harvest||0)+(B.turn==1?rv('clover'):0)+(B.extra||0));B.extra=0;
+ if(has('iAtk')&&B.hand.length<10){const pool=Object.keys(CD).filter(k=>CD[k].t=='a'&&'cur'.includes(CD[k].r)&&!CD[k].tmp&&!CD[k].fused);B.hand.push(tmpCard(pickN(pool,1)[0]))}
+ if(B.turn==1&&has('iPower')&&B.hand.length<10){const ps=B.draw.filter(x=>CD[x].t=='p');if(ps.length){const pid=ps[rnd(0,ps.length-1)];B.draw.splice(B.draw.indexOf(pid),1);B.hand.push(tmpCard(pid))}}
+ if(B.pw.owl){loseHp(B.pw.owl);drawN(B.pw.owl)}
  if(B.pw.demon){B.str+=B.pw.demon;fx('p','筋力+'+B.pw.demon,'buf')}
- for(let k=0;k<(B.pw.devour||0);k++){if(!B.hand.length)break;const id=B.hand.splice(rnd(0,B.hand.length-1),1)[0];B.exh.push(id);B.str+=1;fx('p','むしゃむしゃ 筋力+1','buf')}
+ for(let k=0;k<(B.pw.devour||0);k++){if(!B.hand.length)break;const id=B.hand.splice(rnd(0,B.hand.length-1),1)[0];exh(id);B.str+=1;fx('p','むしゃむしゃ 筋力+1','buf')}
  busy=0;ub();
  if(B.e.hp<=0)win();
 }
@@ -513,16 +609,16 @@ function ub(){
  updHud();if(!B||!$('#stage'))return;const e=B.e;
  $('#ename').textContent=e.n+(e.elite?'（強敵）':'');
  $('#ehp').style.width=Math.max(0,e.hp/e.maxHp*100)+'%';$('#ehpt').textContent=`${Math.max(0,e.hp)}/${e.maxHp}`;
- $('#est').innerHTML=em(e.blk,'b','盾','ブロック')+em(e.str,'s','筋力')+em(e.poi,'p','毒')+em(e.vul,'v','弱体')+em(e.weak,'w','ふにゃ')+em(e.dz,'z','めまい')+em(e.x,'x','阻害');
- const pw=B.pw,a=atkStat()+B.str;
- $('#pst').innerHTML=em(B.blk,'b','盾','ブロック')+em(a,'s','攻+','筋力')+em(B.vul,'v','弱体')+em(B.weak,'w','ふにゃ')+em(B.dz,'z','めまい')+em(B.x,'x','阻害')+em(B.baby,'bb','赤ちゃん')+em(B.bind,'bd',`束縛(${B.played}/3)`,'束縛').replace(/\)(\d+)</,')<')+em(B.doom,'dm','破滅')+em(B.poi,'p','毒')+(B.dodge?'<em>回避</em>':'')+(B.dr?`<em class="b">被ダメ-${B.dr}</em>`:'')+(B.helm?'<em class="b">兜</em>':'')+em(pw.metal,'b','鉄壁')+em(pw.pfield,'p','毒の大地')+em(pw.spirit,'','闘志')+em(pw.harvest,'','収穫+')+em(pw.res,'','抵抗+','状態異常抵抗')+em(B.armor,'b','アーマー')+em(B.art,'z','アーティファクト')+em(B.defM,'v','防御-','防御')+(B.noDraw?'<em>ドロー不可</em>':'')+em(pw.demon,'s','覚醒')+em(pw.devour,'s','むしゃ')+em(pw.punish,'s','隙あり');
- $('#int').textContent='次：'+intentText(e);
+ $('#est').innerHTML=em(e.blk,'b','盾','ブロック')+em(e.str,'s','筋力')+em(e.poi,'p','毒')+em(e.vul,'v','弱体')+em(e.weak,'w','ふにゃ')+em(e.dz,'z','めまい')+em(e.x,'x','阻害')+em(e.art,'z','アーティファクト')+em(e.armor,'b','アーマー')+em(e.sleep,'w','眠り')+em(e.rg,'p','再生')+(e.flatDr?`<em>被ダメ-${e.flatDr}</em>`:'')+(e.dmgX>1?'<em class="s">与ダメ2倍</em>':'')+(e.drStack&&e.dr?`<em>被ダメ-${e.dr}</em>`:'')+(e.pumpB?`<em class="v">次の被ダメ+${e.pumpB}</em>`:'')+(e.bombs||[]).map(b=>`<em class="s">爆弾 あと${b.t}ターン(${calcE(b.a)})</em>`).join('')+(e.ps?`<em class="dm" data-ps="1">パッシブ</em>`:'')+(e.cap?`<em>被ダメ${e.tdmg||0}/${e.cap}</em>`:'')+(e.soft?`<em>被ダメ${e.tdmg||0}/${e.soft}</em>`:'');
+ const pw=B.pw,a=atkStat()+B.str+bandB();
+ $('#pst').innerHTML=em(B.blk,'b','盾','ブロック')+(a?`<em class="s" data-g="筋力">攻${a>0?'+':''}${a}</em>`:'')+em(B.vigor,'s','活力')+(B.pen?`<em class="v">メロン-${B.pen}</em>`:'')+em(B.regen,'p','再生')+(B.stunTurn||B.stunNext?'<em class="v" data-g="スタン">スタン</em>':'')+em(B.vul,'v','弱体')+em(B.weak,'w','ふにゃ')+em(B.dz,'z','めまい')+em(B.x,'x','阻害')+em(B.baby,'bb','赤ちゃん')+em(B.bind,'bd',`束縛(${B.played}/3)`,'束縛').replace(/\)(\d+)</,')<')+em(B.doom,'dm','破滅')+em(B.poi,'p','毒')+(B.dodge?'<em>回避</em>':'')+(B.dr?`<em class="b">被ダメ-${B.dr}</em>`:'')+(B.helm?'<em class="b">兜</em>':'')+em(pw.metal,'b','鉄壁')+em(pw.pfield,'p','毒の大地')+em(pw.spirit,'','闘志')+em(pw.harvest,'','収穫+')+em(pw.res,'','抵抗+','状態異常抵抗')+em(B.echo,'s','やまびこ')+(has('hglass')?`<em>砂時計${P.hg||0}/${rv('hglass')}</em>`:'')+(B.carry?`<em>持ち越し${B.carry}</em>`:'')+em(B.armor,'b','アーマー')+em(B.art,'z','アーティファクト')+em(B.defM,'v','防御-','防御')+(B.noDraw?'<em>ドロー不可</em>':'')+em(pw.demon,'s','覚醒')+em(pw.devour,'s','むしゃ')+em(pw.punish,'s','隙あり');
+ $('#int').textContent='次：'+(e.stunNext?'スタン中（行動なし）':e.sleep>0?'眠り（行動なし）':intentText(e));
  $('#orb').textContent=`${B.en}/${maxEn()}`;
  $('#pile').innerHTML=`山札 ${B.draw.length}<br>捨札 ${B.disc.length}${B.exh.length?'・廃棄 '+B.exh.length:''}`;
  $('.ctl .end').disabled=!!busy;
  const hand=$('#hand'),n=B.hand.length,W=hand.clientWidth||340,cw=Math.min(84,(W-20)/5);
  const step=n>1?Math.min(cw+4,(W-cw-6)/(n-1)):0,bound=B.bind&&B.played>=3;
- hand.innerHTML=B.hand.map((id,i)=>cardHTML(id,`data-i="${i}" style="--cw:${cw}px;margin-left:${i?step-cw:0}px"`,B.picking?'pickme':CD[id].c>B.en||bound||CD[id].np?'no':'')).join('');
+ hand.innerHTML=B.hand.map((id,i)=>cardHTML(id,`data-i="${i}" style="--cw:${cw}px;margin-left:${i?step-cw:0}px"`,B.picking?'pickme':costOf(CD[id])>B.en||bound||(CD[id].np&&!(realId(id)=='dizzyc'&&B.e.dizzyPlay))||B.stunTurn?'no':'')).join('');
 }
 function fx(who,t,cls){const st=$('#stage');if(!st)return;const d=document.createElement('div');d.className='fx '+cls;d.textContent=t;
  if(who=='e'){d.style.right=(14+rnd(0,50))+'px';d.style.top=(110+rnd(0,30))+'px'}else{d.style.left=(14+rnd(0,50))+'px';d.style.bottom=(90+rnd(0,30))+'px'}
@@ -530,129 +626,222 @@ function fx(who,t,cls){const st=$('#stage');if(!st)return;const d=document.creat
 function shake(who){const el=$(who=='e'?'#en':'#pl');if(!el)return;el.classList.remove('hit');void el.offsetWidth;el.classList.add('hit')}
 async function lunge(who){const el=$(who=='e'?'#en':'#pl');if(!el)return;el.classList.add(who=='e'?'le':'lp');await wait(130);el.classList.remove('le','lp')}
 function healP(n){if(B&&B.x)n*=.5;n=Math.round(n);const h=Math.min(n,P.maxHp-P.hp);if(h>0){P.hp+=h;fx('p','+'+h,'heal')}}
+function hurtE(n,label,cls,atk){const e=B.e;if(n<=0)return 0;
+ if(e.drStack){n=Math.max(0,n-e.dr);if(n<=0){fx('e','軽減','blk');return 0}}
+ if(e.flatDr){n=Math.max(0,n-e.flatDr);if(n<=0){fx('e','軽減','blk');return 0}}
+ if(e.cap){const left=Math.max(0,e.cap-(e.tdmg||0));if(n>left){n=left;fx('e','上限!','blk')}}
+ e.tdmg=(e.tdmg||0)+n;e.hp=Math.max(0,e.hp-n);if(label!==null&&n>0)fx('e',(label||'')+'-'+n,cls||'dmg');if(n>0)shake('e');
+ if(e.hp<=0&&e.next){morph(e);return n}
+ if(e.halfStr&&!e.halfDone&&e.hp>0&&e.hp<=e.maxHp/2){e.halfDone=1;e.str+=e.halfStr;fx('e','筋力+'+e.halfStr,'buf')}
+ if(n>0&&atk&&e.hitStr&&e.hp>0){e.str+=e.hitStr}
+ if(n>0&&atk&&e.dizzyOnAtk&&e.hp>0)addStatusCards('dizzyc',1,'draw');
+ if(n>0){if(e.drStack)e.dr++;if(e.hitBlk)e.blk+=e.hitBlk;if(e.leech){healP(1);e.blk+=3}if(atk&&e.sleep>0)e.sleep--}
+ if(e.cap&&e.tdmg>=e.cap&&!e.capHit){e.capHit=1;e.weak+=1;fx('e','ふにゃ','deb')}
+ if(e.stunAt&&!e.stunned&&e.hp>0&&e.hp<=Math.round(e.maxHp*e.stunAt/124)){e.stunned=1;e.stunNext=1;log(`${e.n}はよろめいた！次の行動はスタン`)}
+ return n}
 function dealE(base,pierce,mult){const e=B.e;
  if(B.dz&&Math.random()<.4){fx('e','MISS','miss');return 0}
- let raw=calcP(base)*mult;const crit=Math.random()<critRate();if(crit)raw*=1+P.cd/100;if(B.first&&has('pin'))raw*=2;B.first=0;
+ let raw=calcP(base+(B.vigor||0))*mult;if(e.vulnDeb&&(e.vul||e.weak||e.dz||e.x||e.poi))raw*=1.5;const crit=Math.random()<critRate();if(crit)raw*=1+P.cd/100;if(B.first&&has('pin'))raw*=rv('pin');B.first=0;
  let d=Math.round(raw);if(!pierce){const a=Math.min(e.blk,d);e.blk-=a;d-=a}
- if(d>0){e.hp=Math.max(0,e.hp-d);fx('e',(crit?'会心 ':'')+'-'+d,crit?'crit':'dmg');shake('e')}else fx('e','ガード','blk');return d}
+ if(d>0){d=hurtE(d,crit?'会心 ':'',crit?'crit':'dmg',1)}else fx('e','ガード','blk');return d}
 function hitP(raw){
- if(B.dodge){B.dodge=0;fx('p','回避!','miss');return}
+ const dodged=()=>{if(has('tail')){B.str+=rv('tail');healP(rv('tail','v2'));fx('p','しっぽ 筋力+'+rv('tail'),'buf')}};
+ if(B.dodge){B.dodge=0;fx('p','回避!','miss');dodged();return}
  if(B.e.dz&&Math.random()<.2){fx('p','MISS','miss');return}
- if(Math.random()<evade()){fx('p','回避!','miss');return}
- let d=Math.max(0,raw-(B.dr||0));if(B.helm){d=Math.floor(d*.7);B.helm=0;fx('p','兜!','blk')}const a=Math.min(B.blk,d);B.blk-=a;d-=a;
+ if(Math.random()<evade()){fx('p','回避!','miss');dodged();return}
+ let d=Math.max(0,raw-(B.dr||0));if(B.helm){d=Math.floor(d*(1-RL.helm.v/100));B.helm=0;fx('p','兜!','blk')}const a=Math.min(B.blk,d);B.blk-=a;d-=a;
  if(d>0)loseHp(d);else fx('p','ガード','blk');
- if(has('thorn'))B.e.hp=Math.max(0,B.e.hp-3);
+ if(has('thorn'))hurtE(rv('thorn'),null);
 }
 function blocked(){if(Math.random()<resRate()){fx('p','抵抗!','miss');return 1}if(B.art>0){B.art--;fx('p','アーティファクト!','blk');return 1}return 0}
 function debuffP(k,n){
  if(k=='baby'&&has('tie')){fx('p','無効','miss');return}
  if(blocked())return;
- B[k]+=n;fx('p',PST[k],'deb');
+ B[k]+=n;fx('p',PST[k],'deb');if(has('bitter'))healP(rv('bitter'));
 }
 function addStatusCards(id,n,where){if(blocked())return;for(let i=0;i<n;i++){if(where=='draw')B.draw.splice(rnd(0,B.draw.length),0,id);else B.disc.push(id)}fx('p',`${CD[id].n}カード+${n}`,'deb')}
 function pickHand(msg){return new Promise(res=>{if(!B.hand.length)return res(-1);B.picking=res;toast(msg);log(msg);ub()})}
 async function runCard(c,mult){
  const e=B.e;
- if(c.fx=='exhPick'){const i=await pickHand('廃棄するカードをタップ');if(i>=0){const id=B.hand.splice(i,1)[0];B.exh.push(id);fx('p','廃棄','deb')}ub()}
- if(c.fx=='exhRand'&&B.hand.length){const id=B.hand.splice(rnd(0,B.hand.length-1),1)[0];B.exh.push(id);log(`「${CD[id].n}」を廃棄`);ub()}
- if(c.fx=='offer'){P.maxHp=Math.max(1,P.maxHp-6);P.hp=Math.min(P.hp,P.maxHp);fx('p','最大HP-6','deb')}
- if(c.dmg){await lunge('p');const m2=(c.fx=='exec'&&e.hp<=e.maxHp*.3?3:1)*mult,base=dynD(c);
-  for(let k=0;k<hitsOf(c);k++){if(e.hp<=0)break;const d=dealE(base,c.pierce,m2);if(c.drain)healP(d*c.drain);if(has('fang'))healP(d*.05);if(has('vial')&&d>0)e.poi+=1;ub();await wait(170)}
-  if(B.pw.spirit)gainBlk(B.pw.spirit)}
+ if(c.fx=='exhPick'){const i=await pickHand('廃棄するカードをタップ');if(i>=0){const id=B.hand.splice(i,1)[0];exh(id);fx('p','廃棄','deb')}ub()}
+ if(c.fx=='exhRand'&&B.hand.length){const id=B.hand.splice(rnd(0,B.hand.length-1),1)[0];exh(id);log(`「${CD[id].n}」を廃棄`);ub()}
+ if(c.fx=='topPlay'){if(!B.draw.length&&B.disc.length){B.draw=shuffle(B.disc);B.disc=[]}const tid=B.draw.pop();if(tid){const tc=CD[tid];log(`運だめし：「${tc.n}」！`);if(!tc.np){if(tc.base){for(const b of tc.base){if(e.hp<=0)break;await runCard(CD[b],tc.dm||1)}}else await runCard(tc,1)}exh(realId(tid));ub()}}
+ if(c.fx=='exhAll'){while(B.hand.length)exh(B.hand.pop());ub()}
+ if(c.fx=='offer'){P.maxHp=Math.max(1,P.maxHp-c.hpCost);P.hp=Math.min(P.hp,P.maxHp);fx('p','最大HP-'+c.hpCost,'deb')}
+ if(c.dmg){await lunge('p');const m2=(c.fx=='exec'&&e.hp<=e.maxHp*(c.execAt||30)/100?(c.execX||3):1)*mult,base=dynD(c);
+  for(let k=0;k<hitsOf(c);k++){if(e.hp<=0)break;const d=dealE(base,c.pierce,m2);if(c.drain)healP(d*c.drain/100);if(has('fang'))healP(d*rv('fang')/100);if(has('vial')&&d>0)eDeb('poi',rv('vial'),'毒');ub();await wait(170)}
+  if(B.pw.spirit)gainBlk(B.pw.spirit);B.vigor=0}
  if(c.blk)gainBlk(Math.max(0,c.blk+defStat()));
+ if(c.fx=='poiWall')gainBlk(B.e.poi);
+ if(c.maxUp){P.maxHp+=c.maxUp;P.hp+=c.maxUp;fx('p','最大HP+'+c.maxUp,'heal')}
+ if(c.fx=='copyDisc')B.disc.push('clone');
+ if(c.selfDmg)loseHp(c.selfDmg);
  if(c.draw)drawN(c.draw);
+ if(c.fx=='drawUntil'){for(let k=0;k<10;k++){const n0=B.hand.length;drawN(1);if(B.hand.length==n0)break;if(CD[B.hand[B.hand.length-1]].t!='a')break}}
+ if(c.fx=='echo'){B.echo=(B.echo||0)+1;fx('p','やまびこ準備','buf')}
+ if(c.gstr){B.str+=c.gstr;fx('p','筋力+'+c.gstr,'buf')}
+ if(c.estr){e.str+=c.estr;fx('e','筋力+'+c.estr,'buf')}
+ if(c.pe)B.pw.hEn=(B.pw.hEn||0)+c.pe;
  if(c.fx=='noDraw')B.noDraw=1;
  if(c.art){B.art+=c.art;fx('p','アーティファクト+'+c.art,'blk')}
  if(c.en)B.en+=c.en;
  if(c.poi)addPoi(c.poi);
- if(c.vul){e.vul+=c.vul;fx('e','弱体','deb')}
- if(c.weak){e.weak+=c.weak;fx('e','ふにゃ','deb')}
- if(c.dz){e.dz+=c.dz;fx('e','めまい','deb')}
- if(c.hx){e.x+=c.hx;fx('e','阻害','deb')}
+ if(c.vul){if(eDeb('vul',c.vul,'弱体')&&B.pw.vulDraw)drawN(B.pw.vulDraw)}
+ if(c.weak)eDeb('weak',c.weak,'ふにゃ');
+ if(c.dz)eDeb('dz',c.dz,'めまい');
+ if(c.hx)eDeb('x',c.hx,'阻害');
  if(c.heal)healP(c.heal);
  if(c.selfVul)B.vul+=c.selfVul;
  if(c.pw){B.pw[c.pw]=(B.pw[c.pw]||0)+c.v;if(c.pw=='armor'){B.armor+=c.v;fx('p','アーマー+'+c.v,'blk')}if(c.pw=='str'){B.str+=c.v;fx('p','筋力+'+c.v,'buf')}}
  if(c.fx=='pdouble'){e.poi*=2;fx('e','毒×2','deb')}
  if(c.fx=='bdouble')gainBlk(B.blk);
- if(c.fx=='cleanse'){Object.keys(PST).forEach(k=>B[k]=0);fx('p','浄化!','heal')}
+ if(c.fx=='cleanse'){clearP();fx('p','浄化!','heal')}
  if(c.dodge)B.dodge=1;
 }
 async function play(i){
  if(busy||!B)return;const id=B.hand[i],c=CD[id],e=B.e;if(!c)return;
- if(c.np){toast('このカードは使えない');return}
+ if(c.np&&!(realId(id)=='dizzyc'&&B.e.dizzyPlay)){toast('このカードは使えない');return}
  if(B.bind&&B.played>=3){toast('束縛：このターンはもうカードを使えない！');return}
- if(c.c>B.en){toast('エネルギーが足りない！');return}
- busy=1;B.en-=c.c;B.hand.splice(i,1);B.played++;if(c.t=='a')B.atkN++;else B.othN++;
+ if(B.stunTurn){toast('スタン中：このターンはカードを使えない！');return}
+ if(costOf(c)>B.en){toast('エネルギーが足りない！');return}
+ busy=1;B.en-=costOf(c);B.hand.splice(i,1);B.played++;if(c.t=='a')B.atkN++;else B.othN++;
  if(c.t!='p'&&c.t!='c')B.pids.push(id);log(`「${c.n}」！`);ub();
+ const reps=B.echo>0&&id!=='echo'?2:1;if(reps>1){B.echo--;fx('p','やまびこ！','buf')}
+ for(let r=0;r<reps;r++){if(r&&(e.hp<=0||P.hp<=0))break;
  if(c.base){for(const b of c.base){if(e.hp<=0)break;await runCard(CD[b],c.dm||1)}}else await runCard(c,1);
- if(c.ench){c.ench.forEach(x=>{if(x=='draw')drawN(1);if(x=='dr'){B.dr=(B.dr||0)+1;fx('p','被ダメ-1','blk')}})}
- if(c.c==0&&has('bell'))drawN(1);
- if(c.t!='p'){if(c.ench&&c.ench.includes('keep'))B.draw.splice(rnd(0,B.draw.length),0,id);else(c.ex?B.exh:B.disc).push(id)}
+ if(c.ench){c.ench.forEach(x=>{if(x=='draw')drawN(1);if(x=='dr'){B.dr=(B.dr||0)+1;fx('p','被ダメ-1','blk')}})}}
+ if(c.t=='a'&&has('gaunt'))gainBlk(rv('gaunt'));
+ if(c.t=='p'&&e.powDz&&e.hp>0)addStatusCards('dizzyc',1,'draw');
+ B.pen=(B.pen||0)+(e.cardPen||0);
+ if(c.t=='p'&&e.powPoi){B.poi+=e.powPoi;fx('p','毒+'+e.powPoi,'deb')}
+ B.cardCnt=(B.cardCnt||0)+1;if(e.ruinPer&&B.cardCnt%e.ruinPer==0){B.draw.splice(rnd(0,B.draw.length),0,'ruin');fx('p','刻印+1','deb')}
+ if(c.t=='s'&&e.hp>0){if(e.skillBlk){e.blk+=e.skillBlk;fx('e','盾+'+e.skillBlk,'blk')}if(e.skillDmg){e.pumpB+=e.skillDmg;fx('e','次の被ダメ+'+e.skillDmg,'deb')}}
+ if(c.t=='p'){if(has('memo'))drawN(rv('memo'));if(has('acorn'))gainBlk(rv('acorn'))}
+ if(P.hp<=0){ub();await wait(500);return lose()}
+ if(c.c==0&&has('bell'))drawN(rv('bell'));
+ const rid=realId(id);
+ if(c.t!='p'){if(c.ex)exh(rid);else B.disc.push(rid)}
+ if(has('iFour')){P.playN=(P.playN||0)+1;if(P.playN%rv('iFour')==0){drawN(rv('iFour','v2'));fx('p','呼び鈴！','buf')}}
  if(e.hp<=0){ub();await wait(450);return win()}
  busy=0;ub();
 }
 async function endTurn(){
  if(busy||!B)return;busy=1;
- if(has('heart')&&B.en>0)gainBlk(B.en*6);
- if(has('vow')&&B.atkN==0){const v=Math.round(P.maxHp*.1);B.e.hp=Math.max(0,B.e.hp-v);fx('e','誓い -'+v,'dmg');shake('e');ub();await wait(350);if(B.e.hp<=0)return win()}
+ if(has('heart')&&B.en>0)gainBlk(B.en*rv('heart'));
+ if(has('heart')&&B.en>=rv('heart','v2')){clearP();fx('p','浄化!','heal')}
+ if(has('battery'))B.carry=B.en;
+ if(has('calm')&&B.played<=rv('calm'))B.extra=(B.extra||0)+rv('calm','v2');
+ if(has('vow')&&B.atkN==0){const v=Math.round(P.maxHp*rv('vow')/100);hurtE(v,'誓い ');ub();await wait(350);if(B.e.hp<=0)return win()}
  if(has('helm')&&B.atkN>0&&B.othN==0)B.helm=1;
- if(has('shoe')&&B.played>=4)B.extra=1;
+ if(has('shoe')&&B.played>=rv('shoe'))B.extra=(B.extra||0)+rv('shoe','v2');
  const ruins=B.hand.filter(id=>id=='ruin').length;
- if(ruins){loseHp(4*ruins);log(`破滅の刻印が${4*ruins}ダメージ！`);ub();await wait(400);if(P.hp<=0)return lose()}
+ if(ruins){const rd2=CD.ruin.held*ruins;loseHp(rd2);log(`破滅の刻印が${rd2}ダメージ！`);ub();await wait(400);if(P.hp<=0)return lose()}
  if(B.armor>0){gainBlk(B.armor);B.armor--}
- const kept=B.hand.filter(id=>CD[id].ench&&CD[id].ench.includes('keep'));B.hand.filter(id=>!kept.includes(id)).forEach(id=>(CD[id].eth?B.exh:B.disc).push(id));B.hand=kept;
+ if(B.regen>0){healP(B.regen);B.regen--}
+ if(B.stunTurn){B.stunTurn=0;B.stunAfter=1}
+ const kept=B.hand.filter(id=>CD[id].ench&&CD[id].ench.includes('keep'));B.hand.filter(id=>!kept.includes(id)).forEach(id=>CD[id].eth?exh(realId(id)):B.disc.push(realId(id)));B.hand=kept;
+ if(B.e.hp<=0){ub();await wait(400);return win()}
  if(B.doom>0){const cand=B.pids.filter(id=>B.disc.includes(id));
-  if(cand.length){const id=cand[rnd(0,cand.length-1)];B.disc.splice(B.disc.lastIndexOf(id),1);B.exh.push(id);log(`破滅：「${CD[id].n}」が廃棄された`)}
+  if(cand.length){const id=cand[rnd(0,cand.length-1)];B.disc.splice(B.disc.lastIndexOf(id),1);exh(id);log(`破滅：「${CD[id].n}」が廃棄された`)}
   B.draw.splice(rnd(0,B.draw.length),0,'ruin');fx('p','刻印+1','deb')}
+ B.pen=0;
+ if(B.e.endTurnHit){pDmg(P.maxHp*B.e.endTurnHit/100);log(`${B.e.n}の瘴気！`);ub();await wait(300);if(P.hp<=0)return lose()}
+ if(B.e.steal){if(!B.draw.length&&B.disc.length){B.draw=shuffle(B.disc);B.disc=[]}const tid=B.draw.pop();if(tid){const tc=CD[tid],e=B.e;B.disc.push(realId(tid));log(`${e.n}が「${tc.n}」を奪って使った！`);
+  if(tc.t=='p'){if(!blocked()){B.stunNext=1;fx('p','スタン!','deb')}}else if(tc.t=='a'){e.str+=2;fx('e','筋力+2','buf')}else if(tc.t=='s'){e.flatDr=(e.flatDr||0)+2;fx('e','被ダメ-2','blk')}ub();await wait(300)}}
  ub();await wait(450);await enemyTurn();ub();
  if(P.hp<=0){await wait(600);return lose()}
  if(B.e.hp<=0){await wait(450);return win()}
  await wait(250);startTurn();
 }
 async function enemyTurn(){
- const e=B.e;e.blk=0;
- if(e.poi>0){e.hp=Math.max(0,e.hp-e.poi);fx('e','毒-'+e.poi,'deb');shake('e');e.poi--;ub();await wait(400);if(e.hp<=0)return}
+ const e=B.e;B.lost=0;e.blk=0;
+ if(e.poi>0){hurtE(e.poi,'毒','deb');e.poi--;ub();await wait(400);if(e.hp<=0)return}
+ if(e.bombs&&e.bombs.length){e.bombs.forEach(b=>b.t--);const boom=e.bombs.filter(b=>b.t<=0);e.bombs=e.bombs.filter(b=>b.t>0);for(const bm of boom){log('タマネギ爆弾が爆発した！');await lunge('e');hitP(calcE(bm.a));ub();await wait(350);if(P.hp<=0||e.hp<=0)return}}
+ e.softNow=e.soft&&(e.tdmg||0)>=e.soft;if(e.softNow)log(`${e.n}はひるんでいる（与ダメ-30%）`);
+ if(e.armorPerTurn){e.armor+=e.armorPerTurn;if(!e.armorStr&&e.armor>=e.armorAt){e.armorStr=1;e.str+=2;fx('e','筋力+2','buf')}}
+ if(e.sleep>0){e.sleep--;log(`${e.n}は眠っている…`);fx('e','Zzz','miss');['vul','weak','dz','x','baby','bind','doom'].forEach(k=>{if(B[k])B[k]--});await wait(400);enemyEnd(e);return}
+ if(e.stunNext){e.stunNext=0;log(`${e.n}はスタンして動けない！`);fx('e','スタン','miss');['vul','weak','dz','x','baby','bind','doom'].forEach(k=>{if(B[k])B[k]--});['vul','weak','dz','x'].forEach(k=>{if(e[k])e[k]--});await wait(500);enemyEnd(e);return}
  const ms=e.intent;log(`${e.n}の「${ms.map(m=>m.n).join('」→「')}」！`);
- for(const m of ms){if(m.a){await lunge('e');for(let i=0;i<(m.h||1);i++){hitP(calcE(m.a));ub();await wait(220);if(P.hp<=0||e.hp<=0)return}await wait(150)}}
+ for(const m of ms){if(m.a){await lunge('e');for(let i=0;i<(m.h||1);i++){hitP(calcE(m.a)*(m.stunX&&(B.stunNext||B.stunAfter)?m.stunX:1));ub();await wait(220);if(P.hp<=0||e.hp<=0)return}await wait(150)}}
  ['vul','weak','dz','x','baby','bind','doom'].forEach(k=>{if(B[k])B[k]--});
  for(const m of ms){
+ if(m.bomb){(e.bombs=e.bombs||[]).push({t:m.fuse,a:m.bomb});fx('e','爆弾設置','buf')}
  if(m.b){const v=Math.round(m.b*e.sc);e.blk+=v;fx('e','盾+'+v,'blk')}
  if(m.s){e.str+=m.s;fx('e','筋力+'+m.s,'buf')}
- if(m.hl){let v=Math.round(m.hl*e.sc*(e.x?.5:1));v=Math.min(v,e.maxHp-e.hp);e.hp+=v;if(v)fx('e','+'+v,'heal')}
+ if(m.hl)healE(m.hl*e.sc);
+ if(m.rg){e.rg+=m.rg;fx('e','再生+'+m.rg,'buf')}
+ if(m.arm){e.armor+=m.arm;fx('e','アーマー+'+m.arm,'blk')}
+ if(m.sd&&!blocked()){B.str-=m.sd;fx('p','筋力-'+m.sd,'deb');if(has('bitter'))healP(rv('bitter'))}
+ if(m.dd&&!blocked()){B.defM+=m.dd;fx('p','防御-'+m.dd,'deb');if(has('bitter'))healP(rv('bitter'))}
+ if(m.stunCh&&Math.random()*100<m.stunCh&&!blocked()){B.stunNext=1;fx('p','スタン!','deb');if(has('bitter'))healP(rv('bitter'))}
  for(const k in EMAP)if(m[k]){debuffP(EMAP[k],m[k]);ub();await wait(150)}
  if(m.bl){addStatusCards('bleed',m.bl,'disc');ub();await wait(150)}
  if(m.dc){addStatusCards('dizzyc',m.dc,'draw');ub();await wait(150)}
- if(!m.a&&B.pw.punish&&e.hp>0){e.hp=Math.max(0,e.hp-B.pw.punish);fx('e','隙あり！-'+B.pw.punish,'dmg');shake('e');ub();await wait(250);if(e.hp<=0)return}}
+ if(!m.a&&B.pw.punish&&e.hp>0){hurtE(B.pw.punish,'隙あり！');ub();await wait(250);if(e.hp<=0)return}}
  ['vul','weak','dz','x'].forEach(k=>{if(e[k])e[k]--});
- if(e.boss&&!e.angry&&e.hp<e.maxHp/2){e.angry=1;e.str+=4;log(`${e.n}が怒り狂った！`)}
- pickIntent(e);
+ if(e.boss&&!e.angry&&e.hp<e.maxHp/2){e.angry=1;const a=e.angerStr||4;e.str+=a;fx('e','筋力+'+a,'buf');log(`${e.n}が怒り狂った！`)}
+ enemyEnd(e);
 }
+function healE(v){const e=B.e;v=Math.round(v*(e.x?.5:1));v=Math.min(v,e.maxHp-e.hp);if(v<=0)return;e.hp+=v;fx('e','+'+v,'heal');if(e.healStr){e.str+=e.healStr;fx('e','筋力+'+e.healStr,'buf')}if(e.healClean){const k=['vul','weak','dz','x','poi'].find(k=>e[k]>0);if(k){e[k]=0;fx('e','状態異常を解除','buf')}}}
+function enemyEnd(e){if(e.endBlk){e.blk+=Math.round(e.endBlk*e.sc);}if(e.armor>0){e.blk+=e.armor;e.armor--}if(e.rg>0){healE(e.rg);e.rg--}e.pumpB=0;B.stunAfter=0;e.softNow=0;pickIntent(e)}
 
 function rollCards(kind){const w=kind=='boss'?{r:1}:kind=='elite'?{c:35,u:45,r:20}:{c:60,u:33,r:7};const out=[];let guard=0;
  while(out.length<3&&guard++<200){let x=Math.random()*Object.values(w).reduce((a,b)=>a+b,0),rr;for(const k in w){x-=w[k];if(x<=0){rr=k;break}}
   const pool=Object.keys(CD).filter(k=>CD[k].r==rr&&!out.includes(k));if(pool.length)out.push(pickN(pool,1)[0])}return out}
+function tickRegret(){let gone=0;P.deck=P.deck.filter(id=>{if(!CD[id].rg)return true;CD[id].left--;if(CD[id].left<=0){gone++;return false}return true});return gone}
 function win(){
- if(!B)return;const k=B.kind,e=B.e;busy=0;B=null;
- let g=k=='boss'?rnd(110,130):k=='elite'?rnd(60,80):rnd(30,42);if(has('gtom'))g=Math.round(g*1.5);const nr=P.noRew;if(nr){g=0;P.noRew=0}P.gold+=g;
- if(has('medal'))P.hp=Math.min(P.maxHp,P.hp+8);
+ if(!B)return;
+ if(B.e.deathBomb&&!B.e.boomed){B.e.boomed=1;log(`${B.e.n}が爆発した！`);pDmg(B.e.deathBomb*B.e.sc);ub();if(P.hp<=0){busy=0;return lose()}}const k=B.kind,e=B.e,opt=B.opt||{},errand=B.errand;busy=0;B=null;
+ const gone=tickRegret();
+ let g=k=='boss'?rnd(110,130):k=='elite'?rnd(60,80):rnd(30,42);if(has('gtom'))g=Math.round(g*(1+rv('gtom')/100));if(has('crown'))g=Math.round(g*(1-rv('crown','v2')/100));const nr=P.noRew;if(nr){g=0;P.noRew=0}addGold(g);
+ if(has('medal'))P.hp=Math.min(P.maxHp,P.hp+rv('medal'));
+ if(k=='elite'&&has('sFlag'))P.hp=Math.min(P.maxHp,P.hp+rv('sFlag','v2'));
  if(e.last)return showEnd(true);
- const pts=(k=='boss'?4:k=='elite'?3:2)+(has('pick')?1:0);P.pts+=pts;
+ if(opt.goldOnly){showMsg(`${e.n}をたおした！`,`${g}G を手に入れた（待ち伏せなのでゴールドだけ）`+(gone?`<br>「後悔」が${gone}枚消えた`:''),showMap);return}
+ let extra='';
+ if(errand){addGold(150);P.pts+=2;extra+='<br><br>王様のおつかいを果たした！150Gとステータスポイント2を手に入れた'}
+ if(opt.bonus=='relic2'){const got=pickN(NORMAL_R.filter(r=>!P.relics.includes(r)),2);got.forEach(giveRelic);if(got.length)extra+='<br><br>兄スイカを倒した報酬：'+got.map(r=>`「${RL[r].n}」`).join('')}
+ if(k=='elite'&&has('iFuse')){const made=[];for(let n=0;n<rv('iFuse');n++){const idx=P.deck.map((x,i)=>i).filter(i=>CD[P.deck[i]].t!='c');if(idx.length<2)break;const [a,b]=pickN(idx,2);const r=makeFused(P.deck[a],P.deck[b]);[a,b].sort((x,y)=>y-x).forEach(i=>P.deck.splice(i,1));P.deck.push(r.id);made.push(CD[r.id].n)}if(made.length)extra+=`<br><br>合成のかまどで「${made.join('」「')}」ができた`}
+ if(gone)extra+=`<br>「後悔」が${gone}枚消えた`;
+ const pts=(k=='boss'?4:k=='elite'?3:2)+rv('pick');P.pts+=pts;
  const afterAll=()=>k=='boss'?nextAct():showMap();
- const statThen=()=>showStat(`勝利ボーナス +${pts}`,()=>nr?afterAll():showCardPick(k,afterAll));
+ const cardThen=()=>nr?afterAll():showCardPick(k,opt.bonus=='rare'?()=>showCardPick('boss',afterAll,'弟スイカを倒した報酬：レアカード'):afterAll);
+ const statThen=()=>showStat(`勝利ボーナス +${pts}`,cardThen);
  let next=statThen;
- if(k=='boss')next=()=>showRelicPick('ボスレリックを選ぼう！',BOSS_R,statThen,'k-brelic');
- let rtxt='';if(k=='elite'){const pool=NORMAL_R.filter(r=>!P.relics.includes(r));if(pool.length){const r=pickN(pool,1)[0];giveRelic(r);rtxt=`<br><br>レリック「${RL[r].n}」を手に入れた！<br><span class="sub">${RL[r].d}</span>`}}
- showMsg(`${e.n}をたおした！`,(nr?'王様の気まぐれ宝箱の代償で、今回はゴールドとカード報酬なし…':`${g}G を手に入れた`)+(has('medal')?'（勝者のメダルでHP+8）':'')+rtxt,next);
+ if(k=='boss')next=()=>showRelicPick('ボスアーティファクトを選ぼう！',BOSS_R,has('sKey')&&P.act==1?()=>showRelicPick('宝物庫の鍵：もう1つ選べる！',BOSS_R,statThen,'k-brelic'):statThen,'k-brelic');
+ let rtxt='';if(k=='elite'){const pool=NORMAL_R.filter(r=>!P.relics.includes(r));if(pool.length){const r=pickN(pool,1)[0];giveRelic(r);rtxt=`<br><br>レリック「${RL[r].n}」を手に入れた！<br><span class="sub">${rd(r)}</span>`}}
+ showMsg(`${e.n}をたおした！`,(nr?'王様の気まぐれ宝箱の代償で、今回はゴールドとカード報酬なし…':`${g}G を手に入れた`)+(has('medal')?`（勝者のメダルでHP+${rv('medal')}）`:'')+rtxt+extra,next);
 }
 function lose(){if(!B&&!P)return;B=null;busy=0;showEnd(false)}
-function nextAct(){const h=Math.round((P.maxHp-P.hp)*.7);P.hp+=h;P.act++;P.floor=0;P.path=[];
- showMsg(`第${P.act}層　${ACTS[P.act-1].n}`,`ひと晩休んでHPが${h}回復した。${P.act==3?`この先にラスボス「${BS[P.last].n}」が待っている…`:'敵はさらに手ごわくなる！'}`,showMap)}
+function nextAct(){const h=Math.round((P.maxHp-P.hp)*.8);P.hp+=h;P.act++;P.floor=0;P.path=[];showHelper(h)}
+const randCardId=rs=>pickN(Object.keys(CD).filter(k=>rs.includes(CD[k].r)&&!CD[k].fused&&!CD[k].tmp&&!CD[k].rg),1)[0];
+function addRegret(){const id='rg'+Date.now().toString(36)+rnd(0,9999);CD[id]={...CD.regret,left:CD.regret.left,rg:1};P.deck.push(id);return id}
+function multiPick(title,sub,ids,n,done,cancel){let sel=[];const need=Math.min(n,ids.length);
+ const draw=()=>{main.innerHTML=`<h2>${title}</h2><p class="sub">${sub}（${sel.length}/${need}）</p><div class="deckg">${ids.map((id,i)=>cardHTML(id,`data-a="sel" data-v="${i}" role="button" tabindex="0"`,sel.includes(i)?'pick':'')).join('')}</div><div class="gap"></div><button class="big" data-a="ok" ${sel.length==need?'':'disabled'}>決定</button>${cancel?'<div class="gap"></div><button data-a="back" style="width:100%">やめる</button>':''}`};
+ H={sel:v=>{const i=+v;sel=sel.includes(i)?sel.filter(x=>x!=i):sel.length<need?[...sel,i]:sel;draw()},ok:()=>done(sel),back:cancel};draw()}
+const deckIdx=()=>P.deck.map((x,i)=>i).filter(i=>CD[P.deck[i]].t!='c');
+function showHelper(h){
+ updHud();const farm=P.act==2,pool=pickN((farm?FARM_R:INN_R).filter(r=>!P.relics.includes(r)),3);
+ const who=farm?'農家':'宿屋の主人',sp=farm?'farmer':'inn';
+ const line=farm?'「おや、わしとそっくりな顔だね。畑はめちゃくちゃにされたけど、残ったもので良ければ持っていきな」':'「いらっしゃい、ずいぶんお疲れだね。ゆっくり休んでおいき。お代はいらないよ、ひとつ持っていきな」';
+ H={pick:id=>{giveRelic(id);
+  if(id=='fSel'){const ids=pickN(Object.keys(CD).filter(k=>'cur'.includes(CD[k].r)&&!CD[k].fused&&!CD[k].tmp),RL.fSel.v);return multiPick('農家の種袋',`好きなカードを${RL.fSel.v2}枚選んでください`,ids,RL.fSel.v2,sel=>{sel.forEach(i=>P.deck.push(ids[i]));showMsg('種をまいた',sel.map(i=>`「${CD[ids[i]].n}」`).join('')+'をデッキに加えた',showMap)})}
+  if(id=='fMorph'){const idx=deckIdx(),ids=idx.map(i=>P.deck[i]);return multiPick('畑の土壌改良剤',`変化させるカードを${RL.fMorph.v}枚選んでください`,ids,RL.fMorph.v,sel=>{const out=[];sel.map(i=>idx[i]).forEach(di=>{const nid=randCardId('cur');out.push(`「${CD[P.deck[di]].n}」→「${CD[nid].n}」`);P.deck[di]=nid});showMsg('カードが変化した！',out.join('<br>'),showMap)})}
+  if(id=='iCurse'){for(let n=0;n<RL.iCurse.v;n++){Math.random()<.5?P.deck.push('ruin'):addRegret()}const got=pickN(NORMAL_R.filter(r=>!P.relics.includes(r)),RL.iCurse.v2);got.forEach(giveRelic);return showMsg('鍵を開けた…',`呪いが${RL.iCurse.v}枚デッキに入った。<br>`+got.map(r=>`「${RL[r].n}」<br><span class="sub">${rd(r)}</span>`).join('<br>'),showMap)}
+  showMsg(`「${RL[id].n}」を受け取った`,farm?'「気をつけてな！」':'「またおいで」',showMap)}};
+ main.innerHTML=`<h2>第${P.act}層　${ACTS[P.act-1].n}</h2><div class="hero ${farm?'farm':'innbg'}" style="gap:30px">${img('hero',4)}${img(sp,5)}</div>
+ <div class="panel"><b style="font-weight:400;color:var(--gold)">${who}</b><br>${line}</div>
+ <p class="center">${h?`ひと晩休んでHPが${h}回復した。`:'ひと晩ぐっすり休んだ。'}${P.act==3?`この先にラスボス「${BS[P.last].n}」が待っている…`:''}</p>
+ <h2>アーティファクトを1つ選ぶ</h2><div class="cards">${pool.map(r=>`<button class="card" data-a="pick" data-v="${r}"><span class="ic k-srelic">${RL[r].i}</span><span class="tx"><b>${RL[r].n}</b><span>${rd(r)}</span></span></button>`).join('')}</div>`;
+}
+function enchantCard(id){const A=CD[id],ne=pickN(Object.keys(ENCH),1)[0];const nid='f'+Date.now().toString(36)+(fseq++);
+ CD[nid]={n:A.fused?A.n:A.n+'★',c:Math.max(0,A.c-(ne=='cost'?1:0)),t:A.t,r:'f',base:A.base||[id],ench:[...(A.ench||[]),ne],dm:(A.dm||1)*(ne=='dmg'?1.2:1),ex:A.ex,fused:1};return{id:nid,ne}}
 function showMsg(t,b,next){updHud();H={ok:next};main.innerHTML=`<div class="panel center"><h2>${t}</h2><p>${b}</p></div><button class="big" data-a="ok">次へ</button>`}
-function giveRelic(id){P.relics.push(id);RL[id].on?.(P);updHud()}
+function giveRelic(id){P.relics.push(id);ON[id]?.(P,RL[id]);updHud()}
 function showRelicPick(t,src,next,cls){
  const pool=pickN(src.filter(r=>!P.relics.includes(r)),3);if(!pool.length)return next();
  H={pick:id=>{giveRelic(id);next()}};
- main.innerHTML=`<h2>${t}</h2><p class="sub">ひとつ選んでください</p><div class="cards">${pool.map(r=>`<button class="card" data-a="pick" data-v="${r}"><span class="ic ${cls}">${RL[r].i}</span><span class="tx"><b>${RL[r].n}</b><span>${RL[r].d}</span></span></button>`).join('')}</div>`;
+ main.innerHTML=`<h2>${t}</h2><p class="sub">ひとつ選んでください</p><div class="cards">${pool.map(r=>`<button class="card" data-a="pick" data-v="${r}"><span class="ic ${cls}">${RL[r].i}</span><span class="tx"><b>${RL[r].n}</b><span>${rd(r)}</span></span></button>`).join('')}</div>`;
 }
 function showStat(t,next){
  updHud();const add={};ST.forEach(s=>add[s[0]]=0);
@@ -665,10 +854,10 @@ function showStat(t,next){
  H={p:k=>{add[k]++;draw()},m:k=>{add[k]--;draw()},ok:()=>{ST.forEach(([k,,v,c,,cap])=>{P[k]=Math.min(cap,Math.round((P[k]+add[k]*v)*10)/10);P.pts-=add[k]*c;if(k=='maxHp')P.hp+=add[k]*v;if(k=='crit')P.cd+=add[k]*5});next()}};
  draw();
 }
-function showCardPick(kind,next){
+function showCardPick(kind,next,title){
  const pool=rollCards(kind);
- H={pick:id=>{P.deck.push(id);toast(CD[id].n+'をデッキに加えた');next()},skip:next};
- main.innerHTML=`<h2>カード報酬</h2><p class="sub">デッキに加えるカードを1枚選んでください（長押し不要・説明は下に表示）</p><div class="grid3">${pool.map(id=>cardHTML(id,`data-a="pick" data-v="${id}" role="button" tabindex="0"`)).join('')}</div><div class="gap"></div><button data-a="skip" style="width:100%">いらない</button>`;
+ H={pick:id=>{P.deck.push(id);toast(CD[id].n+'をデッキに加えた');next()},skip:()=>{if(has('fSkip')){P.skipN=(P.skipN||0)+1;if(P.skipN>=rv('fSkip')){P.skipN=0;return showMsg('がまんのクワ',randRelic(),next)}toast(`がまんのクワ ${P.skipN}/${rv('fSkip')}`)}next()}};
+ main.innerHTML=`<h2>${title||'カード報酬'}</h2><p class="sub">デッキに加えるカードを1枚選んでください（長押し不要・説明は下に表示）</p><div class="grid3">${pool.map(id=>cardHTML(id,`data-a="pick" data-v="${id}" role="button" tabindex="0"`)).join('')}</div><div class="gap"></div><button data-a="skip" style="width:100%">いらない</button>`;
 }
 function showRemove(next,cancel,paid){
  H={rm:i=>{const id=P.deck[+i];P.deck.splice(+i,1);toast(CD[id].n+'を削除した');next()},back:cancel};
@@ -678,23 +867,64 @@ function showRemove(next,cancel,paid){
 function showKing(){
  updHud();const pool=pickN(START_R,3);
  H={pick:id=>{giveRelic(id);
-  if(id=='sCard')return showCardPick('battle',()=>showCardPick('battle',showMap));
-  if(id=='sGamble'){const got=pickN(NORMAL_R,2);got.forEach(giveRelic);return showMsg('宝箱を開けた！',got.map(r=>`「${RL[r].n}」<br><span class="sub">${RL[r].d}</span>`).join('<br>')+'<br><br>ただし最初の戦闘ではゴールドとカード報酬がもらえない',showMap)}
+  if(id=='sCard'){let n=RL.sCard.v;const go=()=>n-->0?showCardPick('battle',go):showMap();return go()}
+  if(id=='sGamble'){const got=pickN(NORMAL_R,RL.sGamble.v);got.forEach(giveRelic);P.maxHp=Math.max(1,P.maxHp-RL.sGamble.v2);P.hp=Math.min(P.hp,P.maxHp);return showMsg('宝箱を開けた！',got.map(r=>`「${RL[r].n}」<br><span class="sub">${rd(r)}</span>`).join('<br>')+`<br><br>代償として最大HPが${RL.sGamble.v2}減った`,showMap)}
   showMsg(`「${RL[id].n}」を受け取った`,'「うむ、よい旅を！」',showMap)}};
  main.innerHTML=`<div class="hero" style="gap:30px">${img('hero',4)}${img('king',5)}</div>
  <div class="panel"><b style="font-weight:400;color:var(--gold)">王様</b><br>「よくぞ来た、わしにそっくりな若者よ。野菜怪人どもを退治する旅に出るなら、この中からひとつ持っていくがよい」</div>
- <h2>スターターレリックを選ぶ</h2><div class="cards">${pool.map(r=>`<button class="card" data-a="pick" data-v="${r}"><span class="ic k-srelic">${RL[r].i}</span><span class="tx"><b>${RL[r].n}</b><span>${RL[r].d}</span></span></button>`).join('')}</div>`;
+ <h2>スターターレリックを選ぶ</h2><div class="cards">${pool.map(r=>`<button class="card" data-a="pick" data-v="${r}"><span class="ic k-srelic">${RL[r].i}</span><span class="tx"><b>${RL[r].n}</b><span>${rd(r)}</span></span></button>`).join('')}</div>`;
 }
 const evEnd=(t,b)=>showMsg(t,b,showMap);
 const hpUp=n=>{n=Math.round(n);const h=Math.min(n,P.maxHp-P.hp);P.hp+=h;return h};
 const hpDown=n=>{n=Math.round(n);P.hp=Math.max(1,P.hp-n);return n};
-const randRelic=()=>{const pool=NORMAL_R.filter(r=>!P.relics.includes(r));if(!pool.length)return'…でも中は空っぽだった。';const r=pickN(pool,1)[0];giveRelic(r);return`レリック「${RL[r].n}」を手に入れた！<br><span class="sub">${RL[r].d}</span>`};
+const randRelic=()=>{const pool=NORMAL_R.filter(r=>!P.relics.includes(r));if(!pool.length)return'…でも中は空っぽだった。';const r=pickN(pool,1)[0];giveRelic(r);return`レリック「${RL[r].n}」を手に入れた！<br><span class="sub">${rd(r)}</span>`};
 const canRm=()=>P.deck.length>5&&!has('chain');
 const jumpRate=()=>Math.min(95,50+P.eva*2);
-function pitJump(total){if(Math.random()*100<jumpRate()){P.gold+=50;total+=50;updHud();H={again:()=>pitJump(total),go:()=>evEnd('先に進んだ',`落とし穴で合計${total}G手に入れた。`)};
+function pitJump(total){if(Math.random()*100<jumpRate()){addGold(50);total+=50;updHud();H={again:()=>pitJump(total),go:()=>evEnd('先に進んだ',`落とし穴で合計${total}G手に入れた。`)};
  main.innerHTML=pathBar()+`<div class="panel center"><h2>ぴょーん！成功！</h2><p>50G拾った（合計${total}G）</p></div><div class="cards"><button class="card" data-a="again"><span class="ic k-event">跳</span><span class="tx"><b>もう一度飛ぶ</b><span>成功率${jumpRate()}%・成功で+50G／失敗でHP12を失って終わり</span></span></button><button class="card" data-a="go"><span class="ic k-event">進</span><span class="tx"><b>先に進む</b><span>ここでやめる</span></span></button></div>`}
  else{hpDown(12);evEnd('落ちた…',`穴に落ちてHPを12失った。${total?`（それまでに${total}G手に入れた）`:''}`)}}
 const EV=[
+ {t:'やさい市場の福引き',sp:'ichigo',d:'「福引き1回100G！大当たりはアーティファクト2個だよ！」',o:[
+  {l:'引く（100G）',d:'30%でアーティファクト2個／40%で50G／30%で何もなし',ok:()=>P.gold>=100,f:()=>{P.gold-=100;const x=Math.random();if(x<.3){const got=pickN(NORMAL_R.filter(r=>!P.relics.includes(r)),2);got.forEach(giveRelic);evEnd('大当たり！',got.map(r=>`「${RL[r].n}」<br><span class="sub">${rd(r)}</span>`).join('<br>'))}else if(x<.7){addGold(50);evEnd('当たり','50Gもらった。')}else evEnd('はずれ…','ティッシュをもらった。')}},
+  {l:'引かない',d:'呪い「後悔」がデッキに入る',f:()=>{addRegret();evEnd('素通りした','…やっぱり引けばよかったかも。デッキに「後悔」が入った。')}}]},
+ {t:'呪われた鍛冶屋',d:'「カードを鍛えてやろう。代償はもらうがな」',o:[
+  {l:'鍛えてもらう',d:'選んだカード2枚にランダムなエンチャント／呪い「破滅の刻印」がデッキに入る',ok:()=>deckIdx().length>=1,f:()=>{const idx=deckIdx(),ids=idx.map(i=>P.deck[i]);multiPick('呪われた鍛冶屋','鍛えるカードを2枚選んでください',ids,2,sel=>{const out=[];sel.map(i=>idx[i]).forEach(di=>{const r=enchantCard(P.deck[di]);P.deck[di]=r.id;out.push(`「${CD[r.id].n}」に「${ENCH[r.ne]}」`)});P.deck.push('ruin');evEnd('カードが鍛えられた',out.join('<br>')+'<br>代償として「破滅の刻印」がデッキに入った。')},showEvent.cur)}},
+  {l:'断る',d:'何も起こらない',f:()=>evEnd('断った','「ふん、臆病者め」')}]},
+ {t:'重すぎるリュック',d:'道ばたに重そうなリュックが落ちている。',o:[
+  {l:'背負っていく',d:'ランダムなアーティファクト／次の3回の戦闘はエネルギー-1',f:()=>{P.enDown=3;evEnd('よいしょ…',randRelic()+'<br>重くて、次の3回の戦闘はエネルギー-1。')}},
+  {l:'中身だけ漁る',d:'50G',f:()=>{addGold(50);evEnd('中身を漁った','50G見つけた。')}},
+  {l:'放っておく',d:'何も起こらない',f:()=>evEnd('放っておいた','何も起こらなかった。')}]},
+ {t:'双子のスイカ兄弟',sp:'suika',d:'「どっちか1人とだけ勝負してやる。どっちも普通より30%強いぜ」',o:[
+  {l:'兄と戦う',d:'強化された強敵と戦う／勝てば通常の報酬＋アーティファクト2つ',f:()=>startBattle('elite',{boost:1.3,bonus:'relic2'})},
+  {l:'弟と戦う',d:'強化された敵と戦う／勝てば通常の報酬＋レアカード報酬',f:()=>startBattle('battle',{boost:1.3,bonus:'rare'})},
+  {l:'逃げる',d:'HP10を失う',f:()=>{hpDown(10);evEnd('逃げ切った','スイカの種を浴びてHPを10失った。')}}]},
+ {t:'思い出の写真館',d:'「1枚だけ、思い出を形にしてあげよう」',o:[
+  {l:'思い出を形にする',d:'選んだカード1枚を、アンコモン以上のランダムなカードに変える',ok:()=>deckIdx().length>=1,f:()=>{const idx=deckIdx(),ids=idx.map(i=>P.deck[i]);multiPick('思い出の写真館','変えるカードを1枚選んでください',ids,1,sel=>{const di=idx[sel[0]],old=CD[P.deck[di]].n,nid=randCardId('ur');P.deck[di]=nid;evEnd('写真ができた',`「${old}」が「${CD[nid].n}」に変わった。`)},showEvent.cur)}},
+  {l:'写真を撮るだけ',d:'HP15回復',f:()=>evEnd('はい、チーズ',`HPが${hpUp(15)}回復した。`)}]},
+ {t:'大食い大会',d:'「野菜をたくさん食べた者が勝ち！」',o:[
+  {l:'本気で食べる',d:'最大HP+10／次の2回の戦闘はふにゃ2から始まる',f:()=>{P.maxHp+=10;P.hp+=10;P.weakStart=2;evEnd('優勝！','最大HPが10上がった。でも食べすぎて、次の2回の戦闘はふにゃ2から始まる。')}},
+  {l:'普通に食べる',d:'HP20回復',f:()=>evEnd('ごちそうさま',`HPが${hpUp(20)}回復した。`)},
+  {l:'見物する',d:'何も起こらない',f:()=>evEnd('見物した','楽しかった。')}]},
+ {t:'野菜怪人の待ち伏せ',d:'しまった、囲まれてしまった！',o:[
+  {l:'戦う',d:'強敵と戦う（勝ってもゴールドだけ）',f:()=>startBattle('elite',{goldOnly:1})},
+  {l:'お金を投げて逃げる',d:`所持金の半分を失う`,f:()=>{const g=Math.floor(P.gold/2);P.gold-=g;evEnd('なんとか逃げた',`${g}Gを失った。`)}},
+  {l:'走って逃げる',d:'最大HPの15%のHPを失う',f:()=>{const n=hpDown(P.maxHp*.15);evEnd('走って逃げた',`HPを${n}失った。`)}}]},
+ {t:'腐ったトマトの雨',d:'空から腐ったトマトが降ってきた！',o:[
+  {l:'走って抜ける',d:'HP10を失う',f:()=>{hpDown(10);evEnd('ずぶぬれ…','HPを10失った。')}},
+  {l:'カードを傘にする',d:'デッキのカードがランダムに1枚なくなる',ok:()=>P.deck.length>1,f:()=>{const i=rnd(0,P.deck.length-1),n=CD[P.deck[i]].n;P.deck.splice(i,1);evEnd('カードがぐしょぐしょに',`「${n}」がなくなった。`)}},
+  {l:'耐える',d:'次の戦闘は弱体2から始まる',f:()=>{P.vulStart=1;evEnd('耐えた','くさい…。次の戦闘は弱体2から始まる。')}}]},
+ {t:'スリのサクランボ',sp:'sakuranbo',d:'気づいたら財布が軽い…あっ、あいつだ！',o:[
+  {l:'追いかける',d:'50%で取り返せる／失敗するとHP12を失いゴールド-80',f:()=>{if(Math.random()<.5)evEnd('取り返した！','お金は無事だった。');else{hpDown(12);const g=Math.min(80,P.gold);P.gold-=g;evEnd('逃げられた…',`転んでHPを12失い、${g}Gを取られた。`)}}},
+  {l:'あきらめる',d:'ゴールド-80（足りなければ全部）',f:()=>{const g=Math.min(80,P.gold);P.gold-=g;evEnd('あきらめた',`${g}Gを取られた。`)}}]},
+ {t:'毒沼の橋',d:'橋が崩れて毒沼に落ちてしまった！',o:[
+  {l:'急いで這い上がる',d:'最大HPが20%減る',f:()=>{const n=Math.round(P.maxHp*.2);P.maxHp-=n;P.hp=Math.min(P.hp,P.maxHp);evEnd('這い上がった',`毒がまわって最大HPが${n}減った。`)}},
+  {l:'ゆっくり這い上がる',d:'HP4を失う／デッキに「出血」が2枚入る',f:()=>{hpDown(4);P.deck.push('bleed','bleed');evEnd('這い上がった','HPを4失い、デッキに「出血」が2枚入った。（削除で取り除ける）')}}]},
+ {t:'鏡の中のうさみみ',sp:'hero',d:'「わたしはあなた。あなたはわたし…」',o:[
+  {l:'握手する',d:'デッキのカードをすべて複製する／最大HPが半分になる',f:()=>{const nr=P.deck.filter(id=>CD[id].rg).length;P.deck=[...P.deck,...P.deck.filter(id=>!CD[id].rg)];for(let n=0;n<nr;n++)addRegret();P.maxHp=Math.max(1,Math.round(P.maxHp/2));P.hp=Math.min(P.hp,P.maxHp);evEnd('ふたりがひとつに…',`デッキが${P.deck.length}枚になった。最大HPが半分になった。`)}},
+  {l:'鏡を割る',d:'ステータスポイント+3／呪い「破滅の刻印」がデッキに入る',f:()=>{P.pts+=3;P.deck.push('ruin');evEnd('鏡が割れた','ステータスポイントを3手に入れた。デッキに「破滅の刻印」が入った。')}}]},
+ {t:'王様のおつかい',sp:'king',d:'「この荷物を届けてほしいのじゃ。道中は危ないが、礼ははずむぞ」',o:[
+  {l:'引き受ける',d:'次の戦闘は弱体2・ふにゃ2から始まる／勝てば追加で150Gとポイント2',f:()=>{P.errand=1;evEnd('荷物を受け取った','次の戦闘に勝てばお礼がもらえる。')}},
+  {l:'断る',d:'呪い「後悔」がデッキに入る',f:()=>{addRegret();evEnd('断った','王様の悲しそうな顔が忘れられない…。デッキに「後悔」が入った。')}}]},
  {t:'倒れた大木',d:'目の前に大きな木が倒れていて、道がふさがれている。どうする？',o:[
   {l:'回り道する',d:'HP5回復＋カードを1枚削除',ok:canRm,f:()=>{hpUp(5);showRemove(()=>evEnd('回り道した','HPが5回復し、デッキが少し身軽になった。'),()=>evEnd('回り道した','HPが5回復した。'))}},
   {l:'がんばって切る',d:'HP5を失う＋ステータスポイント3',f:()=>{hpDown(5);P.pts+=3;evEnd('木を切り倒した！','HPを5失ったが、ステータスポイントを3手に入れた。')}}]},
@@ -706,7 +936,7 @@ const EV=[
   {l:'たっぷり飲む',d:'最大HPの30%回復',f:()=>evEnd('ごくごく…',`HPが${hpUp(P.maxHp*.3)}回復した。`)},
   {l:'水筒に詰めて持ち歩く',d:'最大HP+6',f:()=>{P.maxHp+=6;P.hp+=6;evEnd('水筒を手に入れた','最大HPが6上がった。')}}]},
  {t:'迷子のミニトマト',d:'小さなミニトマトが泣いている。「おうちがわからないの…」',o:[
-  {l:'家まで送る',d:'HP6を失う／お礼に60G＋ポイント1',f:()=>{hpDown(6);P.gold+=60;P.pts+=1;evEnd('無事に送り届けた','道中でHPを6失ったが、お礼に60Gとステータスポイント1をもらった。')}},
+  {l:'家まで送る',d:'HP6を失う／お礼に60G＋ポイント1',f:()=>{hpDown(6);addGold(60);P.pts+=1;evEnd('無事に送り届けた','道中でHPを6失ったが、お礼に60Gとステータスポイント1をもらった。')}},
   {l:'道だけ教える',d:'次の2回の戦闘で、開始時に筋力+3（その戦闘中有効）',f:()=>{P.mtBuff=2;evEnd('道を教えた','「ありがとう！がんばってね！」元気が出た。次の2回の戦闘で筋力+3から始まる。')}}]},
  {t:'謎の祭壇',d:'古びた祭壇に「力を求める者よ、血を捧げよ」と刻まれている。',o:[
   {l:'血を捧げる',d:'HP10を失う／レアカード3枚から1枚選ぶ',f:()=>{hpDown(10);showCardPick('boss',showMap)}},
@@ -718,13 +948,13 @@ const EV=[
   {l:'修行する',d:'HP8を失う／ポイント2',f:()=>{hpDown(8);P.pts+=2;evEnd('いい汗をかいた','HPを8失ったが、ステータスポイントを2手に入れた。')}},
   {l:'技を磨く',d:'デッキのカード1枚を複製',f:()=>showDup()}]},
  {t:'サイコロカボチャ',sp:'pump',d:'「ケケケ、有り金ぜんぶ賭けて勝負しないか？勝てば倍、負ければゼロだ」',o:[
-  {l:'全部賭ける',d:'50%で所持金が2倍／はずれると0G',ok:()=>P.gold>0,f:()=>{const g=P.gold;if(Math.random()<.5){P.gold*=2;evEnd('勝った！',`${g}Gが${g*2}Gになった！`)}else{P.gold=0;evEnd('負けた…',`${g}Gすべて取られてしまった。`)}}},
+  {l:'全部賭ける',d:'50%で所持金が2倍／はずれると0G',ok:()=>P.gold>0,f:()=>{const g=P.gold;if(Math.random()<.5){addGold(g);evEnd('勝った！',`${g}Gが${g*2}Gになった！`)}else{P.gold=0;evEnd('負けた…',`${g}Gすべて取られてしまった。`)}}},
   {l:'賭けない',d:'何も起こらない',f:()=>evEnd('断った','「ちぇっ、つまらないやつ」')}]},
  {t:'古い宝箱',d:'苔むした宝箱が落ちている。なんだか嫌な気配もする…',o:[
   {l:'開ける',d:'70%でレリック／30%で呪いカード「破滅の刻印」がデッキに入りHP5を失う',f:()=>{if(Math.random()<.7)evEnd('お宝だ！',randRelic());else{P.deck.push('ruin');hpDown(5);evEnd('呪われた…','HPを5失い、デッキに「破滅の刻印」が入ってしまった。（削除で取り除ける）')}}},
   {l:'開けない',d:'何も起こらない',f:()=>evEnd('そっとしておいた','何も起こらなかった。')}]},
  {t:'王様からの手紙',sp:'king',d:'「旅は順調かね？支度金を送るか、デッキの見直しを手伝うか、好きなほうを選ぶがよい」',o:[
-  {l:'支度金をもらう',d:'+200G',f:()=>{P.gold+=200;evEnd('支度金を受け取った','200G手に入れた。')}},
+  {l:'支度金をもらう',d:'+200G',f:()=>{addGold(200);evEnd('支度金を受け取った','200G手に入れた。')}},
   {l:'デッキを見直す',d:'カードを2枚まで削除',ok:canRm,f:()=>{const done=()=>evEnd('デッキがすっきりした','「うむ、よい判断じゃ」');showRemove(()=>canRm()?showRemove(done,done):done(),done)}}]},
  {t:'毒キノコの森',d:'毒々しいキノコが生い茂る森。近道だが空気が悪い。',o:[
   {l:'突っ切る',d:'最大HPの10%を失う',f:()=>{const n=hpDown(P.maxHp*.1);evEnd('なんとか抜けた',`胞子を吸い込んでHPを${n}失った。`)}},
@@ -751,11 +981,11 @@ function showDup(){
 
 function showRest(){
  updHud();const h=Math.round(P.maxHp*.35);
- H={rest:()=>{P.hp=Math.min(P.maxHp,P.hp+h);showMsg('ぐっすり休んだ',`HPが回復した（最大${h}）`,showMap)},fuse:()=>showFuse(0,showRest),rm:()=>showRemove(showMap,showRest)};
+ H={rest:()=>{P.hp=Math.min(P.maxHp,P.hp+h);showMsg('ぐっすり休んだ',`HPが回復した（最大${h}）`,showMap)},fuse:()=>showFuse(0,showRest),train:()=>{P.pts+=2;showStat('鍛錬 +2',showMap)}};
  main.innerHTML=pathBar()+`<h2>休憩ステージ</h2><p class="sub">畑のすみの小屋でひと休み。どれか1つを選べます（ポイント ${P.pts}）</p><div class="cards">
  <button class="card" data-a="rest"><span class="ic k-rest">休</span><span class="tx"><b>休む</b><span>HPを${h}回復</span></span></button>
- <button class="card" data-a="fuse" ${P.pts<1||P.deck.length<2?'disabled':''}><span class="ic k-elite">合</span><span class="tx"><b>カード合成</b><span>ポイントを1使って2枚を1枚に合成。ランダムでエンチャントが1つつく${P.pts<1?'（ポイントが足りない）':''}</span></span></button>
- <button class="card" data-a="rm" ${P.deck.length<=5||has('chain')?'disabled':''}><span class="ic k-shop">捨</span><span class="tx"><b>デッキを整理</b><span>カードを1枚削除</span></span></button></div>`;
+ <button class="card" data-a="fuse" ${P.pts<2||P.deck.length<2||P.hp<=10?'disabled':''}><span class="ic k-elite">合</span><span class="tx"><b>カード合成</b><span>ポイント2とHP10を使って2枚を1枚に合成。ランダムでエンチャントが1つつく${P.pts<2?'（ポイントが足りない）':P.hp<=10?'（HPが足りない）':''}</span></span></button>
+ <button class="card" data-a="train"><span class="ic k-elite">鍛</span><span class="tx"><b>鍛錬</b><span>ステータスポイント+2</span></span></button></div>`;
 }
 let fseq=0;
 function fuseName(a,b){const x=Array.from(a),y=Array.from(b);return x.slice(0,Math.ceil(x.length/2)).join('')+y.slice(Math.floor(y.length/2)).join('')}
@@ -765,28 +995,28 @@ function makeFused(a,b){const A=CD[a],Bc=CD[b],ne=pickN(Object.keys(ENCH),1)[0];
  const id='f'+Date.now().toString(36)+(fseq++);
  CD[id]={n:fuseName(A.n,Bc.n),c:Math.max(0,Math.ceil((A.c+Bc.c)/2)-(ne=='cost'?1:0)),t,r:'f',base,ench,dm:(A.dm||1)*(Bc.dm||1)*(ne=='dmg'?1.2:1),ex:base.some(x=>CD[x].ex)?1:0,fused:1};
  return{id,ne}}
-const fuseCost=(a,b)=>1+(CD[a].fused?1:0)+(CD[b].fused?1:0);
+const fuseCost=(a,b)=>CD[a].fused||CD[b].fused?3:2;
 function showFuse(free=0,back=showRest){
  let sel=[];
- const draw=()=>{const ok=sel.length==2,cost=free?0:ok?fuseCost(P.deck[sel[0]],P.deck[sel[1]]):1+sel.filter(i=>CD[P.deck[i]].fused).length;
+ const draw=()=>{const ok=sel.length==2,cost=free?0:ok?fuseCost(P.deck[sel[0]],P.deck[sel[1]]):sel.some(i=>CD[P.deck[i]].fused)?3:2;
   const A=ok&&CD[P.deck[sel[0]]],Bc=ok&&CD[P.deck[sel[1]]];
-  main.innerHTML=pathBar()+`<h2>カード合成</h2><p class="sub">合成する2枚を選んでください（1枚目の名前の前半＋2枚目の名前の後半）。${free?'今回はポイント不要！':`消費ポイント：1＋合成済みカード1枚につき+1。所持ポイント ${P.pts}`}</p>
+  main.innerHTML=pathBar()+`<h2>カード合成</h2><p class="sub">合成する2枚を選んでください（1枚目の名前の前半＋2枚目の名前の後半）。${free?'今回はポイント不要！':`消費：ポイント2（合成済みカードを含むと3）とHP10。所持ポイント ${P.pts}`}</p>
   ${ok?`<div class="panel">できるカード：<b style="font-weight:400;color:var(--gold)">${fuseName(A.n,Bc.n)}</b>　コスト${Math.ceil((A.c+Bc.c)/2)}（★エンチャントでコスト-1の可能性あり）<br><span class="sub">2枚の効果を両方持ち、ランダムなエンチャントが1つつく。必要ポイント ${cost}</span></div>`:''}
   <div class="deckg">${P.deck.map((id,i)=>cardHTML(id,`data-a="sel" data-v="${i}" role="button" tabindex="0"`,sel.includes(i)?'pick':'')).join('')}</div><div class="gap"></div>
   <button class="big" data-a="ok" ${ok&&P.pts>=cost?'':'disabled'}>${ok&&P.pts<cost?'ポイントが足りない':'合成する'}</button><div class="gap"></div><button data-a="back" style="width:100%">やめる</button>`};
  H={sel:v=>{const i=+v;if(CD[P.deck[i]].t=='c'){toast('呪いカードは合成できない');return}sel=sel.includes(i)?sel.filter(x=>x!=i):sel.length<2?[...sel,i]:[sel[1],i];draw()},back,
-  ok:()=>{const a=P.deck[sel[0]],b=P.deck[sel[1]],cost=free?0:fuseCost(a,b);if(P.pts<cost)return;P.pts-=cost;let hh=0;if(has('sHeal')){hh=Math.min(30,P.maxHp-P.hp);P.hp+=hh}
+  ok:()=>{const a=P.deck[sel[0]],b=P.deck[sel[1]],cost=free?0:fuseCost(a,b);if(P.pts<cost)return;if(!free){if(P.hp<=10){toast('HPが足りない');return}P.hp-=10}P.pts-=cost;let hh=0;if(has('sHeal')){hh=Math.min(rv('sHeal'),P.maxHp-P.hp);P.hp+=hh}
    const r=makeFused(a,b);[...sel].sort((x,y)=>y-x).forEach(i=>P.deck.splice(i,1));P.deck.push(r.id);updHud();
    H={ok:showMap};main.innerHTML=pathBar()+`<h2>合成成功！</h2><div class="grid3"><span></span>${cardHTML(r.id)}<span></span></div><div class="panel center">エンチャント「${ENCH[r.ne]}」がついた！<br>${hh?`王家の薬草袋でHPが${hh}回復した<br>`:''}<span class="sub">長押し不要：効果はカードに書いてあります</span></div><button class="big" data-a="ok">次へ</button>`}};
  draw();
 }
-const price=p=>has('card')?Math.round(p*.75):p;
+const price=p=>has('card')?Math.round(p*(1-rv('card')/100)):p;
 const CPR={c:[45,55],u:[70,82],r:[115,135]};
 function showShop(fresh){
  updHud();
  if(fresh){const byR=r=>Object.keys(CD).filter(k=>CD[k].r==r);const cs=[...pickN(byR('c'),3),...pickN(byR('u'),1),...pickN(byR('r'),1)];
   shop={cards:cs.map(id=>({id,p:rnd(...CPR[CD[id].r]),sold:0})),relics:pickN(NORMAL_R.filter(r=>!P.relics.includes(r)),2).map(r=>({id:r,p:rnd(200,300),sold:0})),juice:0,seed:0,rm:0}}
- const items=[...shop.relics.map((r,i)=>({k:'r'+i,ic:RL[r.id].i,cls:'k-relic',n:RL[r.id].n,d:RL[r.id].d,p:price(r.p),sold:r.sold})),
+ const items=[...shop.relics.map((r,i)=>({k:'r'+i,ic:RL[r.id].i,cls:'k-relic',n:RL[r.id].n,d:rd(r.id),p:price(r.p),sold:r.sold})),
   {k:'rm',ic:'捨',cls:'k-shop',n:'カード削除',d:has('chain')?'絆の鎖のせいで削除できない':'デッキからカードを1枚取り除く',p:price(P.rm),sold:shop.rm||has('chain')},
   {k:'juice',ic:'汁',cls:'k-rest',n:'トマトジュース',d:'HPを最大HPの20%回復',p:price(70),sold:shop.juice},
   {k:'seed',ic:'種',cls:'k-elite',n:'ステータスの種',d:'ステータスポイント+1',p:price(50),sold:shop.seed}];
